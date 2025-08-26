@@ -20,6 +20,12 @@ services:
       - .env
     ports:
       - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./main.py:/app/main.py
+      - ./logging_config.py:/app/logging_config.py
+      - ./requirements.txt:/app/requirements.txt
+      - ./venv:/app/venv
     networks:
       - app_network
 
