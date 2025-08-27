@@ -20,6 +20,8 @@ services:
       - .env
     ports:
       - "3000:3000"
+    depends_on:
+      - db
     volumes:
       - ./src:/app/src
       - ./main.py:/app/main.py
