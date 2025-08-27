@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .lote import Lote
     from .posicao import Posicao
     from .indexador import Indexador
+    from .relacao_ativo_securitizadora import RelacaoAtivoSecuritizadora
 
 class Ativo(BaseModel, TimestampMixin):
     __tablename__ = "tb_ativo"
@@ -27,7 +28,8 @@ class Ativo(BaseModel, TimestampMixin):
     dt_vencimento : Mapped[date]          = mapped_column(Date, nullable=False)
     fl_ativo      : Mapped[bool]          = mapped_column(Boolean, nullable=False, server_default=text("true"))
 
-    fundo         : Mapped[Optional["FundoInvestimento"]] = relationship("FundoInvestimento", back_populates="ativos")
-    lote          : Mapped["Lote"]            = relationship("Lote", back_populates="ativos")
-    posicoes      : Mapped[list["Posicao"]]   = relationship("Posicao", back_populates="ativo")
-    indexador     : Mapped["Indexador"]       = relationship("Indexador", back_populates="ativos")
+    fundo                   : Mapped[Optional["FundoInvestimento"]]      = relationship("FundoInvestimento", back_populates="ativos")
+    lote                    : Mapped["Lote"]                             = relationship("Lote", back_populates="ativos")
+    posicoes                : Mapped[list["Posicao"]]                    = relationship("Posicao", back_populates="ativo")
+    indexador               : Mapped["Indexador"]                        = relationship("Indexador", back_populates="ativos")
+    relacoes_securitizadoras: Mapped[list['RelacaoAtivoSecuritizadora']] = relationship("RelacaoAtivoSecuritizadora", back_populates="ativo")
