@@ -1,8 +1,8 @@
-from .base import Base
+from .base import BaseModel
 from .timestamp_mixin import TimestampMixin
 
 
 __all__ = [
-    'Base',
+    'BaseModel',
     'TimestampMixin'
 ]

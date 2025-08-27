@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from logging_config import logger
-import src.config.db
+import app.config.db
 
 app = FastAPI()
 
