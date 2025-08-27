@@ -1,0 +1,21 @@
+# 🚀 PR: Migração para Poetry e atualização de ambiente Docker
+
+## 📌 Descrição
+Esta PR migra o gerenciamento de dependências do projeto para o **Poetry**, trazendo mais controle e padronização.  
+Além disso, atualiza as configurações do **Dockerfile** e do **docker-compose** para utilizar o Poetry, e adiciona um **entrypoint** responsável por rodar as migrações automaticamente antes de iniciar a aplicação.
+
+## 🔑 Alterações principais
+- Adição do **Poetry** como gerenciador de dependências.
+- Remoção do antigo arquivo `requirements.txt`.
+- Criação de arquivo de documentação especificando a versão do Python utilizada.
+- Atualização do **Dockerfile** e do **docker-compose** para uso do Poetry.
+- Configuração do `entrypoint.sh` para rodar migrações e iniciar a aplicação.
+
+## ✅ Commits
+- `657a9b4` feat: atualiza Dockerfile e docker-compose para usar poetry e configura entrypoint para migrações e execução da aplicação  
+- `be41d9c` feat: adiciona o poetry ao projeto, trazendo mais controle no gerenciamento de dependências e um arquivo de documentação especificando a visão do python que está sendo utilizada no projeto, remove antigo arquivo requirements.txt que não será mais utilizado  
+
+## 📝 Observações
+- Agora todas as dependências devem ser instaladas com `poetry install`.  
+- O `entrypoint.sh` já cuida de rodar as migrações automaticamente.  
+- Certifique-se de ter o **Poetry** instalado na máquina local para desenvolvimento.  
