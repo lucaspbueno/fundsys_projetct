@@ -1,6 +1,6 @@
 [project]
 name = "fundsys-project"
-version = "0.1.0"
+version = "0.2.0"
 description = "Projeto criado para realizar o teste técnico da Fundsys"
 authors = [
     {name = "lucaspbueno",email = "lucaspbueno22@gmail.com"}
