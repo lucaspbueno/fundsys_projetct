@@ -4,6 +4,8 @@ from .ativo import Ativo
 from .indexador import Indexador
 from .fundo_investimento import FundoInvestimento
 from .orgao_financeiro import OrgaoFinanceiro
+from .relacao_ativo_securitizadora import RelacaoAtivoSecuritizadora
+from .securitizadora import Securitizadora
 
 __all__ = [
     "Lote",
@@ -11,5 +13,7 @@ __all__ = [
     "Ativo",
     "Indexador",
     "FundoInvestimento",
-    "OrgaoFinanceiro"
+    "OrgaoFinanceiro",
+    "RelacaoAtivoSecuritizadora",
+    "Securitizadora"
 ]
