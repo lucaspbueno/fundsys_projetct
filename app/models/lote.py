@@ -1,8 +1,12 @@
 from .utils import BaseModel, TimestampMixin
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, Numeric, Date 
 from datetime import date
 from decimal import Decimal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .ativo import Ativo
 
 class Lote(BaseModel, TimestampMixin):
     __tablename__ = "tb_lote"
@@ -11,3 +15,5 @@ class Lote(BaseModel, TimestampMixin):
     vl_pu_compra: Mapped[Decimal] = mapped_column(Numeric(24, 9), nullable=False)
     qtd_comprada: Mapped[Decimal] = mapped_column(Numeric(24, 9), nullable=False)
     dt_operacao : Mapped[date]    = mapped_column(Date, nullable=False)
+
+    ativos      : Mapped[list["Ativo"]] = relationship("Ativo", back_populates="lote")
