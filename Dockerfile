@@ -1,13 +1,21 @@
 FROM python:3.13.3
 
-WORKDIR /app
+WORKDIR /fundsys_project
 
 COPY main.py .
 COPY logging_config.py .
-COPY requirements.txt .
+COPY poetry.lock .
+COPY pyproject.toml .
+COPY entrypoint.sh /fundsys_project/entrypoint.sh
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN chmod +x /fundsys_project/entrypoint.sh
 
-COPY ./src ./app/src
+RUN pip install --no-cache-dir poetry && \
+poetry config virtualenvs.create false && \
+poetry install
+
+COPY ./app ./fundsys_project/app
+
+EXPOSE 8000
 
 CMD ["fastapi", "dev"]
