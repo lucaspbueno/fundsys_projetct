@@ -14,7 +14,7 @@ services:
   api:
     container_name: fundsys_api
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     env_file:
       - .env
