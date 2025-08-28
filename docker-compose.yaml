@@ -14,7 +14,7 @@ services:
   api:
     container_name: fundsys_api
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     env_file:
       - .env
@@ -24,10 +24,10 @@ services:
       - db
     entrypoint: ["./entrypoint.sh"]
     volumes:
-      - ./app:/fundsys_project/app
-      - ./main.py:/fundsys_project/main.py
-      - ./logging_config.py:/fundsys_project/logging_config.py
-      - ./alembic.ini:/fundsys_project/alembic.ini
+      - ./backend/app:/fundsys_project/app
+      - ./backend/main.py:/fundsys_project/main.py
+      - ./backend/logging_config.py:/fundsys_project/logging_config.py
+      - ./backend/alembic.ini:/fundsys_project/alembic.ini
     networks:
       - app_network
 
