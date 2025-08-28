@@ -20,14 +20,35 @@ services:
       - .env
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-    entrypoint: ["./entrypoint.sh"]
     volumes:
       - ./backend/app:/fundsys_project/app
       - ./backend/main.py:/fundsys_project/main.py
       - ./backend/logging_config.py:/fundsys_project/logging_config.py
       - ./backend/alembic.ini:/fundsys_project/alembic.ini
+    depends_on:
+      - db
+    entrypoint: ["./entrypoint.sh"]
+    networks:
+      - app_network
+
+  frontend:
+    container_name: fundsys_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/public:/fundsys_project/public
+      - ./frontend/src:/fundsys_project/src
+      - ./frontend/index.html:/fundsys_project/index.html
+      - ./frontend/package.json:/fundsys_project/package.json
+      - ./frontend/package-lock.json:/fundsys_project/package-lock.json
+      - ./frontend/vite.config.js:/fundsys_project/vite.config.js
+    depends_on:
+      - api
     networks:
       - app_network
 
