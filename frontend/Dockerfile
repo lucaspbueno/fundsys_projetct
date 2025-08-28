@@ -10,5 +10,6 @@ RUN npm install
 
 COPY ./src ./src
 
-CMD ["npm", "run", "dev", "--host", "0.0.0.0", "--port", "5500"]
+EXPOSE 5500
 
+CMD ["npm", "run", "dev", "--host", "0.0.0.0", "--port", "5500"]
