@@ -13,9 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useUploadXml } from "@/hooks/useUploadXml";
 
 export default function Home() {
   const [files, setFiles] = useState([]);
+  const uploadMutation = useUploadXml();
 
   // impedir que o browser tente abrir o arquivo ao soltar fora da dropzone
   useEffect(() => {
@@ -61,15 +64,23 @@ export default function Home() {
     const units = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(n) / Math.log(k));
     return `${(n / Math.pow(k, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
-    }
+  }
 
   function handleProcess() {
-    if (!hasFiles) return;
-    // Exemplo: enviar via FormData (multi-arquivo)
-    // const fd = new FormData();
-    // files.forEach((f) => fd.append("files", f));
-    // await api.post("/upload", fd);
-    console.log("Pronto para enviar:", files);
+    if (!hasFiles || uploadMutation.isPending) return;
+    uploadMutation.mutate(files, {
+      onSuccess: () => {
+        toast.success("Arquivos enviados com sucesso!");
+        handleClear();
+      },
+      onError: (err) => {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Erro ao enviar arquivos. Tente novamente.";
+        toast.error(msg);
+      },
+    });
   }
 
   // ====== RENDER ======
@@ -89,10 +100,19 @@ export default function Home() {
             <Dropzone onFiles={handleAddFiles} />
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={handleProcess} disabled={!hasFiles} className="w-full sm:w-auto">
-                Enviar XML
+              <Button
+                onClick={handleProcess}
+                disabled={!hasFiles || uploadMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {uploadMutation.isPending ? "Enviando..." : "Enviar XML"}
               </Button>
-              <Button variant="outline" onClick={handleClear} className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={handleClear}
+                disabled={uploadMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 Limpar
               </Button>
             </div>
@@ -130,10 +150,19 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button onClick={handleProcess} disabled={!hasFiles} className="w-full sm:w-auto">
-              Enviar XML
+            <Button
+              onClick={handleProcess}
+              disabled={!hasFiles || uploadMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {uploadMutation.isPending ? "Enviando..." : "Enviar XML"}
             </Button>
-            <Button variant="outline" onClick={handleClear} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleClear}
+              disabled={uploadMutation.isPending}
+              className="w-full sm:w-auto"
+            >
               Limpar
             </Button>
           </div>
@@ -161,13 +190,16 @@ export default function Home() {
                   <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{f.name}</p>
-                    <p className="text-xs text-muted-foreground">{fmtBytes(f.size)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fmtBytes(f.size)}
+                    </p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveAt(idx)}
+                    disabled={uploadMutation.isPending}
                     aria-label={`Remover ${f.name}`}
                     className="h-8 w-8"
                   >
