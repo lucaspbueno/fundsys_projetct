@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from logging_config import logger
+from app.controllers.file import file_routes
 import app.config.db
 
 app = FastAPI()
@@ -17,9 +18,7 @@ app.add_middleware(
 )
 
 # Rotas
-# app.include_router(auth_routes_login)
-# app.include_router(auth_routes_cliente)
-# app.include_router(cliente_routes)
+app.include_router(file_routes)
 
 @app.get("/")
 def read_root():
