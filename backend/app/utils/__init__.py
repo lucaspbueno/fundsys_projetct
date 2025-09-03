@@ -3,11 +3,13 @@ from .parser import Parser
 from .datetime import str_to_datetime_utc
 from .decimal import str_to_decimal
 from .list import convert_to_list
+from .float import str_to_float
 
 __all__ = [
     "FileLoader",
     "Parser",
     "str_to_datetime_utc",
     "str_to_decimal",
-    "convert_to_list"
+    "convert_to_list",
+    "str_to_float"
 ]
