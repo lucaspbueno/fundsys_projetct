@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from logging_config import logger
 from app.controllers.file import file_routes
+from app.config import get_settings
 import app.config.db
 
-app = FastAPI()
+app = FastAPI(debug=get_settings().DEBUG)
 
 logger.info("🚀 API inicializada com sucesso.")
 
