@@ -1,53 +1,69 @@
-# app/services/xml_service.py
-from typing import Dict, Any, List
-from xml.etree import ElementTree as ET
+# app/services/file.py
+from __future__ import annotations
+from fastapi import UploadFile
+from sqlalchemy.orm import Session
+from typing import Any, Dict, List
+from app.DTOs import ParsedBundleDTO, AtivoDTO, IndexadorDTO, LoteDTO, PosicaoDTO
+from app.utils import FileLoader, Parser, convert_to_list, str_to_datetime_utc, str_to_decimal
 
-class XmlService:
-    ALLOWED_TYPES = {"application/xml", "text/xml"}
 
-    def _analyze_single(self, xml_bytes: bytes) -> Dict[str, Any]:
-        """
-        Lê o XML e retorna um resumo simples:
-        - root_tag: nome da tag raiz do XML
-        - titprivado_count: quantos nós <titprivado> existem (comum em posições ANBIMA)
-        """
-        root = ET.fromstring(xml_bytes)  # lança ParseError se inválido
-        titprivado_count = len(root.findall(".//titprivado"))
-        return {"root_tag": root.tag, "titprivado_count": titprivado_count}
+async def upload_files_service(
+    ls_files: List[UploadFile],
+    db      : Session,
+    loader  : FileLoader,
+    parser  : Parser,
+) -> List[ParsedBundleDTO]:
+    """
+    Lê cada arquivo, parseia o XML e retorna uma lista de ParsedBundleDTO,
+    contendo (Lote, Indexador, Ativo, Posicao) já ligados entre si.
 
-    async def analyze_many(
-        self,
-        files: List,  # List[UploadFile], mas deixamos genérico para facilitar testes
-    ) -> Dict[str, Any]:
-        results: List[Dict[str, Any]] = []
-        for f in files:
-            # Validação leve de content-type (não é segurança forte; é só UX)
-            if getattr(f, "content_type", None) not in self.ALLOWED_TYPES:
-                results.append({
-                    "filename": getattr(f, "filename", None),
-                    "ok": False,
-                    "error": f"Tipo não suportado: {getattr(f, 'content_type', None)}. Envie XML."
-                })
-                continue
+    Não faz persistência nem validação de unicidade/deduplicação.
+    """
+    bundles: List[ParsedBundleDTO] = []
 
-            try:
-                data = await f.read()  # carrega na memória; depois podemos trocar por streaming
-                info = self._analyze_single(data)
-                results.append({
-                    "filename": getattr(f, "filename", None),
-                    "size_bytes": len(data),
-                    "ok": True,
-                    **info
-                })
-            except Exception as e:
-                results.append({
-                    "filename": getattr(f, "filename", None),
-                    "ok": False,
-                    "error": str(e)
-                })
+    for file in ls_files:
+        text   = await loader.load_text(file)
+        doc: Dict[str, Any] = parser.parse_xml_text_to_dict(text) or {}
+        root   = doc.get("arquivoposicao_4_01", {})
+        fundos = convert_to_list(root.get("fundo"))
 
-        return {
-            "received": len(files),
-            "processed": sum(1 for r in results if r["ok"]),
-            "results": results,
-        }
+        for a in fundos:
+            # --- construir entidades individuais ---
+            lote = LoteDTO(
+                vl_pu_compra = str_to_decimal(a.get("pucompra")),
+                qtd_comprada = str_to_decimal(a.get("qtdisponivel")),
+                dt_operacao  = str_to_datetime_utc(a.get("dtoperacao")),
+            )
+
+            indexador = IndexadorDTO(
+                cd_indexador  = a.get("indexador"),
+                sgl_indexador = a.get("sgl_indexador"),
+            )
+
+            ativo = AtivoDTO(
+                cd_ativo       = a.get("codativo"),
+                cd_isin        = a.get("isin"),
+                vl_pu_emissao  = str_to_decimal(a.get("puemissao")),
+                pc_indexador   = str_to_decimal(a.get("percindex")),
+                pc_cupom       = str_to_decimal(a.get("perccupom")),
+                dt_emissao     = str_to_datetime_utc(a.get("dtemissao")),
+                dt_vencimento  = str_to_datetime_utc(a.get("dtvencimento")),
+            )
+
+            posicao = PosicaoDTO(
+                vl_pu_posicao            = str_to_decimal(a.get("puposicao")),
+                vl_principal             = str_to_decimal(a.get("principal")),
+                vl_financeiro_disponivel = str_to_decimal(a.get("valorfindisp")),
+                dt_posicao               = str_to_datetime_utc(a.get("dtoperacao")),
+            )
+
+            bundles.append(
+                ParsedBundleDTO(
+                    lote      = lote,
+                    indexador = indexador,
+                    ativo     = ativo,
+                    posicao   = posicao,
+                )
+            )
+
+    return bundles
