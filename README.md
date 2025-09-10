@@ -13,7 +13,6 @@
   <img src="https://img.shields.io/badge/-Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white" />
   <img src="https://img.shields.io/badge/-React-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
   <img src="https://img.shields.io/badge/-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
-  <img src="https://img.shields.io/badge/-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
   <img src="https://img.shields.io/badge/-React%20Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white" />
   <img src="https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
@@ -49,7 +48,6 @@
       - [Upload de Arquivos](#upload-de-arquivos)
       - [Analytics](#analytics)
       - [Histórico](#histórico)
-      - [Arquivo (Novo)](#arquivo-novo)
     - [Frontend](#frontend-1)
   - [Funcionalidades Principais](#funcionalidades-principais)
     - [📤 Upload e Processamento](#-upload-e-processamento)
@@ -63,9 +61,7 @@
     - [🎨 **Versão 0.3.0** - Frontend](#-versão-030---frontend)
     - [📊 **Versão 0.4.0** - Analytics](#-versão-040---analytics)
     - [🔄 **Versão 0.5.0** - Refinamentos](#-versão-050---refinamentos)
-    - [📁 **Versão 0.6.0** - Agrupamento por Arquivo](#-versão-060---agrupamento-por-arquivo)
   - [Autor](#autor)
-  - [📝 Licença](#-licença)
 
 ---
 
@@ -75,7 +71,7 @@ O **FundSys** é um sistema completo para gestão de fundos de investimento que 
 
 - **Upload e processamento** de arquivos XML de posições de fundos
 - **Análise e insights** com gráficos e métricas detalhadas
-- **Histórico de arquivos** enviados com filtros e busca
+- **Histórico de lotes** enviados com filtros e busca
 - **Interface responsiva** com modo claro/escuro
 - **Arquitetura MSC** (Model-Service-Controller) no backend
 - **Persistência robusta** com PostgreSQL e migrações automáticas
@@ -102,7 +98,7 @@ sequenceDiagram
     U->>F: Upload arquivo XML
     F->>B: POST /api/file/upload_files
     B->>B: Parse XML → Extrair dados
-    B->>DB: Persistir (Arquivo, Lote, Ativo, Posição, Indexador)
+    B->>DB: Persistir (Lote, Ativo, Posição, Indexador)
     B->>F: Resposta com sucesso
     F->>U: Feedback visual
     
@@ -114,8 +110,8 @@ sequenceDiagram
     
     U->>F: Acessar Histórico
     F->>B: GET /api/history/*
-    B->>DB: Consultar arquivos enviados
-    B->>F: Lista de arquivos
+    B->>DB: Consultar lotes enviados
+    B->>F: Lista de lotes
     F->>U: Exibir histórico
 ```
 
@@ -138,6 +134,7 @@ sequenceDiagram
 - **React Query** (gerenciamento de estado)
 - **Axios** (cliente HTTP)
 - **Lucide React** (ícones)
+- **shadcn/ui** (componentes)
 
 ### DevOps
 - **Docker Compose** (orquestração)
@@ -277,20 +274,15 @@ docker compose down -v
 - `GET /api/analytics/evolucao-mensal` → Evolução mensal
 
 #### Histórico
-- `GET /api/history/files` → Lista arquivos enviados
-- `GET /api/history/files/{id}` → Detalhes de arquivo específico
-- `GET /api/history/files/{id}/analytics` → Analytics de arquivo específico
-
-#### Arquivo (Novo)
-- `GET /api/arquivo/files` → Histórico agrupado por arquivo
-- `GET /api/arquivo/files/{id}` → Detalhes de arquivo
-- `GET /api/arquivo/files/{id}/analytics` → Analytics de arquivo
+- `GET /api/history/files` → Lista lotes enviados
+- `GET /api/history/files/{lote_id}` → Detalhes de lote específico
+- `GET /api/history/files/{lote_id}/analytics` → Analytics de lote específico
 
 ### Frontend
 
 - `/` → Página inicial (upload)
 - `/insights` → Analytics e gráficos
-- `/history` → Histórico de arquivos
+- `/history` → Histórico de lotes
 - `/ajuda` → Página de ajuda
 
 ---
@@ -308,13 +300,13 @@ docker compose down -v
 - **Distribuição por indexadores** (DI1, IAP, PRE)
 - **Análise de ativos** com top performers
 - **Evolução mensal** dos investimentos
-- **Filtros** por arquivo específico
+- **Filtros** por lote específico
 
 ### 📋 Histórico
-- **Lista cronológica** de arquivos enviados
+- **Lista cronológica** de lotes enviados
 - **Busca e filtros** por nome/data
-- **Detalhes completos** de cada arquivo
-- **Analytics específicos** por arquivo
+- **Detalhes completos** de cada lote
+- **Analytics específicos** por lote
 
 ### 🎨 Interface
 - **Design minimalista** com paleta "baby green"
@@ -363,12 +355,6 @@ docker compose down -v
 - Otimizações de performance
 - Documentação completa
 
-### 📁 **Versão 0.6.0** - Agrupamento por Arquivo
-- Nova funcionalidade de agrupamento por arquivo XML
-- Endpoints específicos para análise por fundo
-- Melhorias na estrutura de dados
-- Histórico aprimorado
-
 ---
 
 ## Autor
@@ -376,7 +362,3 @@ docker compose down -v
 Desenvolvido por [Lucas Bueno](https://github.com/lucaspbueno) 🚀
 
 ---
-
-## 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
