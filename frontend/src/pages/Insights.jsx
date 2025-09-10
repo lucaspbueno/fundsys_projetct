@@ -56,8 +56,8 @@ export default function Insights() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-56px)]">
         <div className="flex items-center gap-3">
-          <RefreshCw className="h-6 w-6 animate-spin text-green-600" />
-          <span className="text-lg">Carregando insights...</span>
+          <RefreshCw className="h-6 w-6 animate-spin text-green-600 dark:text-green-400" />
+          <span className="text-lg text-foreground">Carregando insights...</span>
         </div>
       </div>
     );
@@ -68,8 +68,8 @@ export default function Insights() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Insights do Fundo</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Insights do Fundo</h1>
+          <p className="text-muted-foreground mt-1">
             Análises e métricas dos dados de investimento
           </p>
         </div>
@@ -77,14 +77,14 @@ export default function Insights() {
           <Button
             onClick={handleRefresh}
             variant="outline"
-            className="border-green-200 text-green-700 hover:bg-green-50"
+            className="border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
           <Button
             onClick={handleExport}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white"
           >
             <Download className="h-4 w-4 mr-2" />
             Exportar
@@ -93,9 +93,9 @@ export default function Insights() {
       </div>
 
       {/* Filtros */}
-      <Card className="border-green-200">
+      <Card className="border-green-200 dark:border-green-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-800">
+          <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
             <Filter className="h-5 w-5" />
             Filtros
           </CardTitle>
@@ -109,7 +109,7 @@ export default function Insights() {
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                className="border-green-200 focus:border-green-500"
+                className="border-green-200 dark:border-green-800 focus:border-green-500 dark:focus:border-green-400"
               />
             </div>
             <div>
@@ -119,7 +119,7 @@ export default function Insights() {
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                className="border-green-200 focus:border-green-500"
+                className="border-green-200 dark:border-green-800 focus:border-green-500 dark:focus:border-green-400"
               />
             </div>
             <div>
@@ -129,7 +129,7 @@ export default function Insights() {
                 placeholder="Ex: DI1, IAP, PRE"
                 value={filters.indexador}
                 onChange={(e) => handleFilterChange("indexador", e.target.value)}
-                className="border-green-200 focus:border-green-500"
+                className="border-green-200 dark:border-green-800 focus:border-green-500 dark:focus:border-green-400"
               />
             </div>
             <div>
@@ -139,7 +139,7 @@ export default function Insights() {
                 placeholder="Ex: CRA02300FFL"
                 value={filters.ativo}
                 onChange={(e) => handleFilterChange("ativo", e.target.value)}
-                className="border-green-200 focus:border-green-500"
+                className="border-green-200 dark:border-green-800 focus:border-green-500 dark:focus:border-green-400"
               />
             </div>
           </div>
@@ -148,59 +148,59 @@ export default function Insights() {
 
       {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600">Total de Ativos</p>
-                <p className="text-3xl font-bold text-green-800">
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">Total de Ativos</p>
+                <p className="text-3xl font-bold text-green-800 dark:text-green-200">
                   {overviewData?.total_ativos || 0}
                 </p>
               </div>
-              <BarChart3 className="h-8 w-8 text-green-600" />
+              <BarChart3 className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600">Valor Total</p>
-                <p className="text-3xl font-bold text-blue-800">
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Valor Total</p>
+                <p className="text-3xl font-bold text-blue-800 dark:text-blue-200">
                   R$ {(overviewData?.valor_total || 0).toLocaleString('pt-BR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-600">Indexadores</p>
-                <p className="text-3xl font-bold text-purple-800">
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Indexadores</p>
+                <p className="text-3xl font-bold text-purple-800 dark:text-purple-200">
                   {overviewData?.total_indexadores || 0}
                 </p>
               </div>
-              <PieChart className="h-8 w-8 text-purple-600" />
+              <PieChart className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">Crescimento</p>
-                <p className="text-3xl font-bold text-orange-800">+12.5%</p>
+                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Crescimento</p>
+                <p className="text-3xl font-bold text-orange-800 dark:text-orange-200">+12.5%</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-orange-600" />
+              <TrendingUp className="h-8 w-8 text-orange-600 dark:text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -209,9 +209,9 @@ export default function Insights() {
       {/* Gráficos e Análises */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Distribuição por Indexador */}
-        <Card className="border-green-200">
+        <Card className="border-green-200 dark:border-green-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
               <PieChart className="h-5 w-5" />
               Distribuição por Indexador
             </CardTitle>
@@ -221,18 +221,18 @@ export default function Insights() {
               {overviewData?.indexadores?.map((item, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{item.nome}</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="font-medium text-foreground">{item.nome}</span>
+                    <span className="text-sm text-muted-foreground">
                       {item.quantidade} ativos ({item.percentual}%)
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
                       className={cn(
                         "h-2 rounded-full transition-all duration-500",
-                        index === 0 && "bg-green-500",
-                        index === 1 && "bg-blue-500",
-                        index === 2 && "bg-purple-500"
+                        index === 0 && "bg-green-500 dark:bg-green-400",
+                        index === 1 && "bg-blue-500 dark:bg-blue-400",
+                        index === 2 && "bg-purple-500 dark:bg-purple-400"
                       )}
                       style={{ width: `${item.percentual}%` }}
                     />
@@ -244,9 +244,9 @@ export default function Insights() {
         </Card>
 
         {/* Top Ativos */}
-        <Card className="border-green-200">
+        <Card className="border-green-200 dark:border-green-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
               <Target className="h-5 w-5" />
               Top Ativos por Valor
             </CardTitle>
@@ -254,13 +254,13 @@ export default function Insights() {
           <CardContent>
             <div className="space-y-4">
               {overviewData?.top_ativos?.map((ativo, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   <div>
-                    <p className="font-medium">{ativo.codigo}</p>
-                    <p className="text-sm text-gray-600">{ativo.indexador}</p>
+                    <p className="font-medium text-foreground">{ativo.codigo}</p>
+                    <p className="text-sm text-muted-foreground">{ativo.indexador}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-green-600 dark:text-green-400">
                       R$ {ativo.valor.toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
@@ -275,9 +275,9 @@ export default function Insights() {
       </div>
 
       {/* Gráfico de Evolução Mensal */}
-      <Card className="border-green-200">
+      <Card className="border-green-200 dark:border-green-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-800">
+          <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
             <Activity className="h-5 w-5" />
             Evolução Mensal
           </CardTitle>
@@ -288,21 +288,21 @@ export default function Insights() {
         <CardContent>
           <div className="space-y-4">
             {evolucaoData?.evolucao?.map((mes, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-green-600" />
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-lg">{mes.mes}</p>
-                    <p className="text-sm text-gray-600">{mes.quantidade} ativos</p>
+                    <p className="font-semibold text-lg text-foreground">{mes.mes}</p>
+                    <p className="text-sm text-muted-foreground">{mes.quantidade} ativos</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     R$ {mes.valor.toLocaleString('pt-BR')}
                   </p>
-                  <p className="text-sm text-gray-600">Valor total</p>
+                  <p className="text-sm text-muted-foreground">Valor total</p>
                 </div>
               </div>
             ))}
