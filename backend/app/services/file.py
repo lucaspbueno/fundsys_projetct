@@ -1,10 +1,9 @@
-# app/services/file.py
 from __future__ import annotations
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 from typing import Any, Dict, List
 from app.DTOs import ParsedBundleDTO, AtivoDTO, IndexadorDTO, LoteDTO, PosicaoDTO
-from app.utils import FileLoader, Parser, convert_to_list, str_to_datetime_utc, str_to_decimal
+from app.utils import FileLoader, Parser, convert_to_list, str_to_datetime_utc, str_to_decimal, str_to_float
 
 
 async def upload_files_service(
@@ -44,8 +43,8 @@ async def upload_files_service(
                 cd_ativo       = a.get("codativo"),
                 cd_isin        = a.get("isin"),
                 vl_pu_emissao  = str_to_decimal(a.get("puemissao")),
-                pc_indexador   = str_to_decimal(a.get("percindex")),
-                pc_cupom       = str_to_decimal(a.get("perccupom")),
+                perc_indexador = str_to_float(a.get("percindex")),
+                perc_cupom     = str_to_float(a.get("perccupom")),
                 dt_emissao     = str_to_datetime_utc(a.get("dtemissao")),
                 dt_vencimento  = str_to_datetime_utc(a.get("dtvencimento")),
             )
