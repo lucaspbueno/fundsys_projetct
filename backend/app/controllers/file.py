@@ -6,6 +6,7 @@ from app.schemas import UploadFilesResponse
 from sqlalchemy.orm import Session
 from app.config import get_db
 from logging_config import logger
+import traceback
 
 file_routes = APIRouter(prefix="/file", tags=["Arquivos"])
 
@@ -24,15 +25,17 @@ async def upload_files_route(
     try:
         bundles = await upload_files_service(ls_files=ls_files, db=db, loader=loader, parser=parser)
         return UploadFilesResponse(
-            str_message="Arquivos processados com sucesso!",
-            qtd_arquivos_processados=len(ls_files),
-            data=bundles,
+            str_message              = "Arquivos processados com sucesso!",
+            qtd_arquivos_processados = len(ls_files),
+            data                     = bundles,
         )
     except ValueError as e:
         logger.warning(f"Erro de validação: {e}")
+        logger.warning(f"Stack trace: {traceback.format_exc()}")
         # erros previstos de entrada/regra → 400
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         # erro inesperado → 500 genérico
         logger.error(f"Erro inesperado ao processar arquivos: {e}")
+        logger.error(f"Stack trace completo: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Erro ao processar arquivos")
