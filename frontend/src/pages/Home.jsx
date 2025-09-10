@@ -67,11 +67,11 @@ export default function Home() {
 
     if (uploadStatus === 'success') {
       return (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200">
-          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <div className="flex items-center gap-4 p-6 rounded-2xl bg-primary/5 border border-primary/20 text-primary">
+          <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />
           <div className="flex-1">
-            <p className="font-medium">Upload realizado com sucesso!</p>
-            <p className="text-sm text-green-600 dark:text-green-300">
+            <p className="font-semibold text-base">Upload realizado com sucesso!</p>
+            <p className="text-sm text-primary/80 mt-1">
               {uploadResult?.qtd_arquivos_processados} arquivo(s) processado(s) e {uploadResult?.data?.length || 0} registro(s) inserido(s) no banco.
             </p>
           </div>
@@ -81,11 +81,11 @@ export default function Home() {
 
     if (uploadStatus === 'error') {
       return (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
-          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+        <div className="flex items-center gap-4 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 text-destructive">
+          <AlertCircle className="h-6 w-6 text-destructive flex-shrink-0" />
           <div className="flex-1">
-            <p className="font-medium">Erro no upload</p>
-            <p className="text-sm text-red-600 dark:text-red-300">
+            <p className="font-semibold text-base">Erro no upload</p>
+            <p className="text-sm text-destructive/80 mt-1">
               Verifique o arquivo e tente novamente.
             </p>
           </div>
@@ -145,29 +145,32 @@ export default function Home() {
   if (!hasFiles) {
     // estado vazio — tela centralizada
     return (
-      <section className="grid place-items-center min-h-[calc(100dvh-56px)] p-4">
-        <Card className="w-full max-w-3xl rounded-2xl border border-border bg-card shadow-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-semibold">Importar XML</CardTitle>
-            <CardDescription>
+      <section className="grid place-items-center min-h-[calc(100dvh-64px)] p-6">
+        <Card className="w-full max-w-4xl rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+          <CardHeader className="text-center pb-8">
+            <CardTitle className="text-3xl font-bold text-foreground">
+              Importar XML
+            </CardTitle>
+            <CardDescription className="text-lg text-muted-foreground">
               Arraste o arquivo .xml ou clique para selecionar
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
 
             <UploadStatus />
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 onClick={handleProcess}
                 disabled={!hasFiles || isUploading}
-                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
+                size="lg"
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Processando...
                   </>
                 ) : (
@@ -178,7 +181,8 @@ export default function Home() {
                 variant="outline"
                 onClick={handleClear}
                 disabled={isUploading}
-                className="w-full sm:w-auto border-green-200 text-green-700 hover:bg-green-50"
+                className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30"
+                size="lg"
               >
                 Limpar
               </Button>
@@ -193,17 +197,19 @@ export default function Home() {
   return (
     <section
       className={cn(
-        "mx-auto w-full p-4",
-        "grid gap-6",
+        "mx-auto w-full p-6",
+        "grid gap-8",
         // em telas grandes vira duas colunas: conteúdo | painel de arquivos
-        "lg:grid-cols-[minmax(0,1fr)_420px]"
+        "lg:grid-cols-[minmax(0,1fr)_480px]"
       )}
     >
       {/* Coluna esquerda: card com dropzone + ações */}
-      <Card className="rounded-2xl border border-border bg-card shadow-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-semibold">Importar XML</CardTitle>
-          <CardDescription>
+      <Card className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+        <CardHeader className="text-center pb-6">
+          <CardTitle className="text-2xl font-bold text-foreground">
+            Importar XML
+          </CardTitle>
+          <CardDescription className="text-base text-muted-foreground">
             Arraste os arquivos .xml ou clique para selecionar
           </CardDescription>
         </CardHeader>
@@ -211,22 +217,23 @@ export default function Home() {
         <CardContent className="space-y-6">
           <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{files.length} arquivo(s)</span>
-            <span>{fmtBytes(totalSize)}</span>
+          <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/30 rounded-lg px-4 py-2">
+            <span className="font-medium">{files.length} arquivo(s)</span>
+            <span className="font-mono">{fmtBytes(totalSize)}</span>
           </div>
 
           <UploadStatus />
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={handleProcess}
               disabled={!hasFiles || isUploading}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
+              size="lg"
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Processando...
                 </>
               ) : (
@@ -237,7 +244,8 @@ export default function Home() {
               variant="outline"
               onClick={handleClear}
               disabled={isUploading}
-              className="w-full sm:w-auto border-green-200 text-green-700 hover:bg-green-50"
+              className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30"
+              size="lg"
             >
               Limpar
             </Button>
@@ -246,27 +254,27 @@ export default function Home() {
       </Card>
 
       {/* Coluna direita: painel com lista de arquivos */}
-      <Card className="rounded-2xl border border-border bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Arquivos inseridos</CardTitle>
-          <CardDescription>Revise antes de enviar</CardDescription>
+      <Card className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-foreground">Arquivos inseridos</CardTitle>
+          <CardDescription className="text-base text-muted-foreground">Revise antes de enviar</CardDescription>
         </CardHeader>
-        <Separator />
+        <Separator className="bg-border/50" />
         <CardContent className="p-0">
-          <ScrollArea className="h-[480px]">
-            <ul className="p-3 space-y-2">
+          <ScrollArea className="h-[520px]">
+            <ul className="p-4 space-y-3">
               {files.map((f, idx) => (
                 <li
                   key={`${f.name}-${f.size}-${idx}`}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl border border-border px-3 py-2",
-                    "bg-muted/40 hover:bg-muted/60 transition-colors"
+                    "flex items-center gap-4 rounded-xl border border-border/50 px-4 py-3",
+                    "bg-muted/20 hover:bg-muted/40 transition-all duration-200 hover:scale-[1.02]"
                   )}
                 >
-                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <FileText className="h-5 w-5 text-primary/70 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{f.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium truncate text-foreground">{f.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
                       {fmtBytes(f.size)}
                     </p>
                   </div>
@@ -277,7 +285,7 @@ export default function Home() {
                     onClick={() => handleRemoveAt(idx)}
                     disabled={uploadMutation.isPending}
                     aria-label={`Remover ${f.name}`}
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

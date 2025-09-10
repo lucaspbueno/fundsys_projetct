@@ -22,7 +22,7 @@
 
   /* Paleta principal (claro) */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.1 0.005 285.823);
 
   --card: var(--background);
   --card-foreground: var(--foreground);
@@ -30,34 +30,40 @@
   --popover: var(--background);
   --popover-foreground: var(--foreground);
 
-  /* Verde bebê como primário (claro) */
-  --primary: oklch(0.90 0.08 150);
-  --primary-foreground: oklch(0.141 0.005 285.823);
+  /* Verde bebê minimalista como primário (claro) */
+  --primary: oklch(0.85 0.12 150);
+  --primary-foreground: oklch(0.15 0.005 285.823);
 
-  --secondary: oklch(0.97 0.03 150);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.96 0.02 150);
+  --secondary-foreground: oklch(0.25 0.006 285.885);
 
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
+  --muted: oklch(0.97 0.005 150);
+  --muted-foreground: oklch(0.45 0.016 285.938);
 
-  --accent: oklch(0.97 0.03 150);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --accent: oklch(0.92 0.05 150);
+  --accent-foreground: oklch(0.20 0.006 285.885);
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
+  --border: oklch(0.90 0.01 150);
+  --input: oklch(0.90 0.01 150);
 
-  /* Anel de foco com leve viés esverdeado */
-  --ring: oklch(0.78 0.07 150);
+  /* Anel de foco com viés verde bebê */
+  --ring: oklch(0.80 0.08 150);
+
+  /* Cores adicionais para variedade */
+  --success: oklch(0.60 0.15 150);        /* Verde mais escuro */
+  --warning: oklch(0.70 0.15 45);         /* Laranja */
+  --info: oklch(0.60 0.15 240);           /* Azul */
+  --purple: oklch(0.60 0.15 300);         /* Roxo */
 
   /* ── TOKENS DE SIDEBAR (claro) ───────────────────────────────────────────── */
   /* Estes tokens alimentam classes utilitárias como bg-sidebar / text-sidebar-foreground */
-  --sidebar: oklch(0.97 0.03 150);                 /* fundo da sidebar (verde muito claro)   */
+  --sidebar: oklch(0.98 0.01 150);                 /* fundo da sidebar (verde muito sutil)   */
   --sidebar-foreground: var(--foreground);         /* texto principal na sidebar             */
   --sidebar-primary: var(--primary);               /* ação/realce primário na sidebar        */
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.985 0.015 150);        /* hover/realce leve                      */
+  --sidebar-accent: oklch(0.94 0.02 150);          /* hover/realce leve                      */
   --sidebar-accent-foreground: var(--foreground);  /* texto em hover/realce                  */
   --sidebar-border: var(--border);                 /* bordas internas da sidebar             */
   --sidebar-ring: var(--ring);                     /* foco dentro da sidebar                 */
@@ -104,6 +110,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Cores adicionais */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-purple: var(--purple);
+
   /* Mapa de cores da Sidebar (gera utilitárias bg-sidebar, text-sidebar-foreground, etc.) */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -131,34 +143,40 @@
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: var(--foreground);
 
-  /* Primário mais saturado no escuro para melhor contraste */
-  --primary: oklch(0.68 0.12 150);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Verde bebê minimalista no escuro */
+  --primary: oklch(0.70 0.15 150);
+  --primary-foreground: oklch(0.05 0.005 285.823);
 
-  --secondary: oklch(0.274 0.06 150);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.20 0.03 150);
+  --secondary-foreground: oklch(0.95 0 0);
 
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
+  --muted: oklch(0.25 0.01 150);
+  --muted-foreground: oklch(0.65 0.015 286.067);
 
-  --accent: oklch(0.35 0.10 150);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.30 0.08 150);
+  --accent-foreground: oklch(0.95 0 0);
 
   --destructive: oklch(0.704 0.191 22.216);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.30 0.02 150);
+  --input: oklch(0.25 0.02 150);
 
-  --ring: oklch(0.65 0.10 150);
+  --ring: oklch(0.70 0.12 150);
+
+  /* Cores adicionais para modo escuro */
+  --success: oklch(0.65 0.15 150);        /* Verde mais claro no escuro */
+  --warning: oklch(0.75 0.15 45);         /* Laranja mais claro */
+  --info: oklch(0.65 0.15 240);           /* Azul mais claro */
+  --purple: oklch(0.65 0.15 300);         /* Roxo mais claro */
 
   /* ── TOKENS DE SIDEBAR (escuro) ─────────────────────────────────────────── */
-  --sidebar: oklch(0.21 0.025 150);                 /* verde escuro profundo para o fundo   */
-  --sidebar-foreground: oklch(0.985 0 0);           /* texto claro                          */
+  --sidebar: oklch(0.18 0.02 150);                  /* verde escuro sutil para o fundo      */
+  --sidebar-foreground: oklch(0.95 0 0);            /* texto claro                          */
   --sidebar-primary: var(--primary);                /* ações primárias na sidebar           */
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.26 0.03 150);           /* hover/realce escuro                  */
-  --sidebar-accent-foreground: oklch(0.985 0 0);    /* texto no realce                      */
-  --sidebar-border: oklch(1 0 0 / 12%);             /* bordas internas                      */
+  --sidebar-accent: oklch(0.25 0.05 150);           /* hover/realce escuro                  */
+  --sidebar-accent-foreground: oklch(0.95 0 0);     /* texto no realce                      */
+  --sidebar-border: oklch(0.30 0.02 150);           /* bordas internas                      */
   --sidebar-ring: var(--ring);                      /* foco                                 */
 }
 
