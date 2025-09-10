@@ -16,4 +16,4 @@ class Lote(BaseModel, TimestampMixin):
     qtd_comprada: Mapped[Decimal] = mapped_column(Numeric(24, 9), nullable=False)
     dt_operacao : Mapped[date]    = mapped_column(Date, nullable=False)
 
-    ativo       : Mapped["Ativo"] = relationship("Ativo", back_populates="lote")
+    ativos      : Mapped[list["Ativo"]] = relationship("Ativo", back_populates="lote")
