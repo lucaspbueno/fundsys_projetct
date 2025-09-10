@@ -31,7 +31,7 @@ def upgrade() -> None:
         sa.Column('cd_isin', sa.String(length=100), nullable=False),
         sa.Column('nm_ativo', sa.String(length=100), nullable=False),
         sa.Column('tp_ativo', sa.String(length=100), nullable=False),
-        sa.Column('vl_pu_emisssao', sa.Numeric(precision=24, scale=9), nullable=False),
+        sa.Column('vl_pu_emissao', sa.Numeric(precision=24, scale=9), nullable=False),
         sa.Column('dt_emissao', sa.Date(), nullable=False),
         sa.Column('dt_vencimento', sa.Date(), nullable=False),
         sa.Column('fl_ativo', sa.Boolean(), server_default=sa.text('true'), nullable=False),

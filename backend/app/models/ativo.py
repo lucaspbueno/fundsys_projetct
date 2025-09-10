@@ -1,6 +1,6 @@
 from .utils import BaseModel, TimestampMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, Numeric, Date, Boolean, ForeignKey, text
+from sqlalchemy import Integer, String, Numeric, Date, Boolean, ForeignKey, Float, text
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
@@ -21,9 +21,9 @@ class Ativo(BaseModel, TimestampMixin):
     id_indexador  : Mapped[int]           = mapped_column(Integer, ForeignKey("tb_indexador.id_indexador"), nullable=False)
     cd_ativo      : Mapped[str]           = mapped_column(String(100), nullable=False)
     cd_isin       : Mapped[str]           = mapped_column(String(100), nullable=False)
-    nm_ativo      : Mapped[str]           = mapped_column(String(100), nullable=False)
-    tp_ativo      : Mapped[str]           = mapped_column(String(100), nullable=False)
-    vl_pu_emisssao: Mapped[Decimal]       = mapped_column(Numeric(24, 9), nullable=False)
+    perc_indexador: Mapped[float]         = mapped_column(Float, nullable=False)
+    perc_cupom    : Mapped[float]         = mapped_column(Float, nullable=False)
+    vl_pu_emissao : Mapped[Decimal]       = mapped_column(Numeric(24, 9), nullable=False)
     dt_emissao    : Mapped[date]          = mapped_column(Date, nullable=False)
     dt_vencimento : Mapped[date]          = mapped_column(Date, nullable=False)
     fl_ativo      : Mapped[bool]          = mapped_column(Boolean, nullable=False, server_default=text("true"))

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .ativo import Ativo
+    from .orgao_financeiro import OrgaoFinanceiro
 
 class FundoInvestimento(BaseModel, TimestampMixin):
     __tablename__ = "tb_fundo_investimento"
@@ -14,4 +15,5 @@ class FundoInvestimento(BaseModel, TimestampMixin):
     nm_fundo_investimento: Mapped[str]           = mapped_column(String(100), nullable=False)
     ds_fundo_investimento: Mapped[str]           = mapped_column(String(200), nullable=False)
 
-    ativos: Mapped[list["Ativo"]] = relationship("Ativo", back_populates="fundo")
+    ativos          : Mapped[list["Ativo"]]               = relationship("Ativo",           back_populates="fundo")
+    orgao_financeiro: Mapped[Optional["OrgaoFinanceiro"]] = relationship("OrgaoFinanceiro", back_populates="fundos")
