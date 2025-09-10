@@ -11,13 +11,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadXml } from "@/hooks/useUploadXml";
 
 export default function Home() {
   const [files, setFiles] = useState([]);
+  const [uploadStatus, setUploadStatus] = useState(null); // 'success', 'error', null
+  const [uploadResult, setUploadResult] = useState(null);
   const uploadMutation = useUploadXml();
 
   // impedir que o browser tente abrir o arquivo ao soltar fora da dropzone
@@ -52,11 +54,47 @@ export default function Home() {
   }
 
   const hasFiles = files.length > 0;
+  const isUploading = uploadMutation.isPending;
 
   const totalSize = useMemo(
     () => files.reduce((acc, f) => acc + (f?.size || 0), 0),
     [files]
   );
+
+  // Componente de Status de Upload
+  function UploadStatus() {
+    if (!uploadStatus) return null;
+
+    if (uploadStatus === 'success') {
+      return (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <div className="flex-1">
+            <p className="font-medium">Upload realizado com sucesso!</p>
+            <p className="text-sm text-green-600">
+              {uploadResult?.qtd_arquivos_processados} arquivo(s) processado(s) e {uploadResult?.data?.length || 0} registro(s) inserido(s) no banco.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (uploadStatus === 'error') {
+      return (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <div className="flex-1">
+            <p className="font-medium">Erro no upload</p>
+            <p className="text-sm text-red-600">
+              Verifique o arquivo e tente novamente.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }
 
   function fmtBytes(n) {
     if (!n) return "0 B";
@@ -68,17 +106,37 @@ export default function Home() {
 
   function handleProcess() {
     if (!hasFiles || uploadMutation.isPending) return;
+    
+    setUploadStatus(null);
+    setUploadResult(null);
+    
     uploadMutation.mutate(files, {
-      onSuccess: () => {
-        toast.success("Arquivos enviados com sucesso!");
+      onSuccess: (data) => {
+        setUploadStatus('success');
+        setUploadResult(data);
+        toast.success(`Arquivos processados com sucesso! ${data.qtd_arquivos_processados} arquivo(s) processado(s).`);
         handleClear();
+        
+        // Limpar status de sucesso após 5 segundos
+        setTimeout(() => {
+          setUploadStatus(null);
+          setUploadResult(null);
+        }, 5000);
       },
       onError: (err) => {
+        setUploadStatus('error');
         const msg =
+          err?.response?.data?.detail ||
           err?.response?.data?.message ||
           err?.message ||
           "Erro ao enviar arquivos. Tente novamente.";
         toast.error(msg);
+        
+        // Limpar status de erro após 5 segundos
+        setTimeout(() => {
+          setUploadStatus(null);
+          setUploadResult(null);
+        }, 5000);
       },
     });
   }
@@ -97,21 +155,30 @@ export default function Home() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <Dropzone onFiles={handleAddFiles} />
+            <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
+
+            <UploadStatus />
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={handleProcess}
-                disabled={!hasFiles || uploadMutation.isPending}
-                className="w-full sm:w-auto"
+                disabled={!hasFiles || isUploading}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
               >
-                {uploadMutation.isPending ? "Enviando..." : "Enviar XML"}
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  "Enviar XML"
+                )}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleClear}
-                disabled={uploadMutation.isPending}
-                className="w-full sm:w-auto"
+                disabled={isUploading}
+                className="w-full sm:w-auto border-green-200 text-green-700 hover:bg-green-50"
               >
                 Limpar
               </Button>
@@ -142,26 +209,35 @@ export default function Home() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <Dropzone onFiles={handleAddFiles} />
+          <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{files.length} arquivo(s)</span>
             <span>{fmtBytes(totalSize)}</span>
           </div>
 
+          <UploadStatus />
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               onClick={handleProcess}
-              disabled={!hasFiles || uploadMutation.isPending}
-              className="w-full sm:w-auto"
+              disabled={!hasFiles || isUploading}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
             >
-              {uploadMutation.isPending ? "Enviando..." : "Enviar XML"}
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                "Enviar XML"
+              )}
             </Button>
             <Button
               variant="outline"
               onClick={handleClear}
-              disabled={uploadMutation.isPending}
-              className="w-full sm:w-auto"
+              disabled={isUploading}
+              className="w-full sm:w-auto border-green-200 text-green-700 hover:bg-green-50"
             >
               Limpar
             </Button>
