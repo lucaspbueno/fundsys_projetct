@@ -59,29 +59,32 @@ export default function Dropzone({ onFiles, disabled = false }) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed",
-        "px-6 py-10 text-center",
-        "bg-muted/40 border-border/70 hover:bg-muted/60",
-        "transition-colors",
-        dragOver && !disabled && "bg-muted/70 border-ring",
+        "flex flex-col items-center justify-center gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border-2 border-dashed",
+        "px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12 text-center",
+        "bg-muted/30 border-primary/20 hover:bg-muted/50 hover:border-primary/30",
+        "transition-all duration-300 ease-in-out",
+        dragOver && !disabled && "bg-primary/5 border-primary/40 scale-[1.01] sm:scale-[1.02]",
         disabled && "opacity-50 cursor-not-allowed bg-muted/20"
       )}
       aria-label="Área para soltar arquivos ou clicar para selecionar"
     >
-      <FileUp className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-      <div className="space-y-1">
-        <p className="text-sm">
-          <span className="font-medium">
-            {disabled ? "Processando arquivo..." : "Solte os arquivos XML"} aqui
-          </span>
+      <FileUp className="h-8 w-8 sm:h-10 sm:w-10 text-primary/60" aria-hidden="true" />
+      <div className="space-y-1 sm:space-y-2">
+        <p className="text-sm sm:text-base font-medium text-foreground">
+          {disabled ? "Processando arquivo..." : "Solte os arquivos XML aqui"}
         </p>
-        {!disabled && <p className="text-xs text-muted-foreground">ou</p>}
+        {!disabled && (
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            ou clique para selecionar
+          </p>
+        )}
       </div>
       <Button 
         type="button" 
         variant="outline" 
-        className="rounded-xl"
+        className="rounded-lg border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 text-sm sm:text-base"
         disabled={disabled}
+        size="sm"
       >
         {disabled ? "Processando..." : "Selecionar arquivos"}
       </Button>
