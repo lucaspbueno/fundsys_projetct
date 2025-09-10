@@ -145,23 +145,23 @@ export default function Home() {
   if (!hasFiles) {
     // estado vazio — tela centralizada
     return (
-      <section className="grid place-items-center min-h-[calc(100dvh-64px)] p-6">
-        <Card className="w-full max-w-4xl rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-          <CardHeader className="text-center pb-8">
-            <CardTitle className="text-3xl font-bold text-foreground">
+      <section className="grid place-items-center min-h-[calc(100dvh-64px)] p-4 sm:p-6">
+        <Card className="w-full max-w-2xl sm:max-w-4xl rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+          <CardHeader className="text-center pb-6 sm:pb-8 px-4 sm:px-6">
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">
               Importar XML
             </CardTitle>
-            <CardDescription className="text-lg text-muted-foreground">
+            <CardDescription className="text-base sm:text-lg text-muted-foreground">
               Arraste o arquivo .xml ou clique para selecionar
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-6 sm:space-y-8 px-4 sm:px-6">
             <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
 
             <UploadStatus />
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Button
                 onClick={handleProcess}
                 disabled={!hasFiles || isUploading}
@@ -170,7 +170,7 @@ export default function Home() {
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                     Processando...
                   </>
                 ) : (
@@ -197,34 +197,34 @@ export default function Home() {
   return (
     <section
       className={cn(
-        "mx-auto w-full p-6",
-        "grid gap-8",
+        "mx-auto w-full p-4 sm:p-6",
+        "grid gap-6 sm:gap-8",
         // em telas grandes vira duas colunas: conteúdo | painel de arquivos
-        "lg:grid-cols-[minmax(0,1fr)_480px]"
+        "lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_480px]"
       )}
     >
       {/* Coluna esquerda: card com dropzone + ações */}
-      <Card className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-        <CardHeader className="text-center pb-6">
-          <CardTitle className="text-2xl font-bold text-foreground">
+      <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+        <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
             Importar XML
           </CardTitle>
-          <CardDescription className="text-base text-muted-foreground">
+          <CardDescription className="text-sm sm:text-base text-muted-foreground">
             Arraste os arquivos .xml ou clique para selecionar
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
           <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/30 rounded-lg px-4 py-2">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 sm:px-4 py-2">
             <span className="font-medium">{files.length} arquivo(s)</span>
             <span className="font-mono">{fmtBytes(totalSize)}</span>
           </div>
 
           <UploadStatus />
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Button
               onClick={handleProcess}
               disabled={!hasFiles || isUploading}
@@ -233,7 +233,7 @@ export default function Home() {
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   Processando...
                 </>
               ) : (
@@ -254,26 +254,26 @@ export default function Home() {
       </Card>
 
       {/* Coluna direita: painel com lista de arquivos */}
-      <Card className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-bold text-foreground">Arquivos inseridos</CardTitle>
-          <CardDescription className="text-base text-muted-foreground">Revise antes de enviar</CardDescription>
+      <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+        <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl font-bold text-foreground">Arquivos inseridos</CardTitle>
+          <CardDescription className="text-sm sm:text-base text-muted-foreground">Revise antes de enviar</CardDescription>
         </CardHeader>
         <Separator className="bg-border/50" />
         <CardContent className="p-0">
-          <ScrollArea className="h-[520px]">
-            <ul className="p-4 space-y-3">
+          <ScrollArea className="h-[400px] sm:h-[520px]">
+            <ul className="p-3 sm:p-4 space-y-2 sm:space-y-3">
               {files.map((f, idx) => (
                 <li
                   key={`${f.name}-${f.size}-${idx}`}
                   className={cn(
-                    "flex items-center gap-4 rounded-xl border border-border/50 px-4 py-3",
-                    "bg-muted/20 hover:bg-muted/40 transition-all duration-200 hover:scale-[1.02]"
+                    "flex items-center gap-3 sm:gap-4 rounded-lg sm:rounded-xl border border-border/50 px-3 sm:px-4 py-2 sm:py-3",
+                    "bg-muted/20 hover:bg-muted/40 transition-all duration-200 hover:scale-[1.01] sm:hover:scale-[1.02]"
                   )}
                 >
-                  <FileText className="h-5 w-5 text-primary/70 shrink-0" />
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary/70 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate text-foreground">{f.name}</p>
+                    <p className="text-xs sm:text-sm font-medium truncate text-foreground">{f.name}</p>
                     <p className="text-xs text-muted-foreground font-mono">
                       {fmtBytes(f.size)}
                     </p>
@@ -285,9 +285,9 @@ export default function Home() {
                     onClick={() => handleRemoveAt(idx)}
                     disabled={uploadMutation.isPending}
                     aria-label={`Remover ${f.name}`}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </li>
               ))}
