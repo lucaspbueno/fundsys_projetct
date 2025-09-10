@@ -31,6 +31,16 @@ export default function Header() {
           >
             Insights
           </NavLink>
+          <NavLink 
+            to="/history" 
+            className={({isActive}) => `px-3 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              isActive 
+                ? 'bg-primary/10 text-primary border border-primary/20' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Histórico
+          </NavLink>
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
