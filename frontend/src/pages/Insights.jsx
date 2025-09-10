@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Card,
   CardHeader,
@@ -20,11 +21,17 @@ import {
   PieChart,
   Activity,
   Target,
+  History,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOverview, useIndexadores, useEvolucaoMensal } from "@/hooks/useAnalytics";
+import { useFileAnalytics } from "@/hooks/useHistory";
 
 export default function Insights() {
+  const [searchParams] = useSearchParams();
+  const selectedFileId = searchParams.get('file');
+  
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",
@@ -32,12 +39,15 @@ export default function Insights() {
     ativo: "",
   });
 
-  // Buscar dados da API
+  // Use file-specific analytics if file ID is provided, otherwise use general overview
+  const { data: fileAnalyticsData, isLoading: fileAnalyticsLoading } = useFileAnalytics(selectedFileId);
   const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview();
   const { data: indexadoresData, isLoading: indexadoresLoading } = useIndexadores();
   const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal();
 
-  const loading = overviewLoading || indexadoresLoading || evolucaoLoading;
+  // Use file-specific data if available, otherwise fall back to general overview
+  const analyticsData = selectedFileId ? fileAnalyticsData : overviewData;
+  const loading = selectedFileId ? fileAnalyticsLoading : (overviewLoading || indexadoresLoading || evolucaoLoading);
 
   function handleFilterChange(key, value) {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -68,12 +78,39 @@ export default function Insights() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-            Insights do Fundo
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            {selectedFileId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+            )}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
+              {selectedFileId ? "Analytics do Arquivo" : "Insights do Fundo"}
+            </h1>
+          </div>
           <p className="text-base sm:text-lg text-muted-foreground mt-1 sm:mt-2">
-            Análises e métricas dos dados de investimento
+            {selectedFileId 
+              ? `Análises específicas do arquivo: ${analyticsData?.nome_arquivo || 'Carregando...'}`
+              : "Análises e métricas dos dados de investimento"
+            }
           </p>
+          {selectedFileId && analyticsData?.data_envio && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Enviado em: {new Date(analyticsData.data_envio).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <Button
@@ -160,7 +197,7 @@ export default function Insights() {
               <div>
                 <p className="text-xs sm:text-sm font-medium text-success">Total de Ativos</p>
                 <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {overviewData?.total_ativos || 0}
+                  {analyticsData?.total_ativos || 0}
                 </p>
               </div>
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
@@ -174,7 +211,7 @@ export default function Insights() {
               <div>
                 <p className="text-xs sm:text-sm font-medium text-info">Valor Total</p>
                 <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-foreground">
-                  R$ {(overviewData?.valor_total || 0).toLocaleString('pt-BR', {
+                  R$ {(analyticsData?.valor_total || 0).toLocaleString('pt-BR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -191,7 +228,7 @@ export default function Insights() {
               <div>
                 <p className="text-xs sm:text-sm font-medium text-purple">Indexadores</p>
                 <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {overviewData?.total_indexadores || 0}
+                  {analyticsData?.total_indexadores || 0}
                 </p>
               </div>
               <PieChart className="h-6 w-6 sm:h-8 sm:w-8 text-purple" />
@@ -224,7 +261,7 @@ export default function Insights() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <div className="space-y-3 sm:space-y-4">
-              {overviewData?.indexadores?.map((item, index) => (
+              {analyticsData?.indexadores?.map((item, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm sm:text-base font-medium text-foreground">{item.nome}</span>
@@ -259,7 +296,7 @@ export default function Insights() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <div className="space-y-3 sm:space-y-4">
-              {overviewData?.top_ativos?.map((ativo, index) => (
+              {analyticsData?.top_ativos?.map((ativo, index) => (
                 <div key={index} className="flex items-center justify-between p-3 sm:p-4 bg-muted/20 hover:bg-muted/30 rounded-lg sm:rounded-xl transition-all duration-200">
                   <div>
                     <p className="text-sm sm:text-base font-medium text-foreground">{ativo.codigo}</p>
