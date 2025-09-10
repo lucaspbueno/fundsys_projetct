@@ -2,12 +2,13 @@
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, History, HelpCircle } from "lucide-react";
+import { Upload, History, BarChart3, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { to: "/", label: "Importar XML", icon: Upload, end: true },
-  { to: "/historico", label: "Histórico", icon: History },
+  { to: "/history", label: "Histórico", icon: History },
+  { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/ajuda", label: "Ajuda", icon: HelpCircle },
 ];
 
