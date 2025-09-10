@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from logging_config import logger
 from app.controllers.file import file_routes
 from app.controllers.analytics import analytics_routes
+from app.controllers.history import history_routes
 from app.config import get_settings
 import app.config.db
 
@@ -22,6 +23,7 @@ app.add_middleware(
 # Rotas
 app.include_router(file_routes)
 app.include_router(analytics_routes)
+app.include_router(history_routes)
 
 @app.get("/")
 def read_root():
