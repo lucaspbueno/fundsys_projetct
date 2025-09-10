@@ -11,7 +11,7 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
 
         <Link to="/" className="font-semibold tracking-tight">
-          fundsys<span className="text-[var(--brand)]">.ui</span>
+          fundsys<span className="text-green-600 dark:text-primary">.ui</span>
         </Link>
 
         <nav className="flex items-center gap-1">

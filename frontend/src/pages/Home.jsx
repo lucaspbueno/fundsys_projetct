@@ -67,11 +67,11 @@ export default function Home() {
 
     if (uploadStatus === 'success') {
       return (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800">
-          <CheckCircle className="h-5 w-5 text-green-600" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200">
+          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
           <div className="flex-1">
             <p className="font-medium">Upload realizado com sucesso!</p>
-            <p className="text-sm text-green-600">
+            <p className="text-sm text-green-600 dark:text-green-300">
               {uploadResult?.qtd_arquivos_processados} arquivo(s) processado(s) e {uploadResult?.data?.length || 0} registro(s) inserido(s) no banco.
             </p>
           </div>
@@ -81,11 +81,11 @@ export default function Home() {
 
     if (uploadStatus === 'error') {
       return (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
-          <AlertCircle className="h-5 w-5 text-red-600" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
           <div className="flex-1">
             <p className="font-medium">Erro no upload</p>
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-red-600 dark:text-red-300">
               Verifique o arquivo e tente novamente.
             </p>
           </div>
