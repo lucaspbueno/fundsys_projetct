@@ -198,7 +198,7 @@ Na raiz do projeto existe um arquivo de exemplo com as variáveis já configurad
 mv .env-exemple .env
 ```
 
-As variáveis já estão configuradas no arquivo de exemplo. Se necessário, você pode ajustar as configurações editando o arquivo `.env`.
+As variáveis já estão configuradas no arquivo de exemplo. Se necessário, você pode ajustar as configurações editando o arquivo `.env`
 
 ### 5.3 Subir com Docker Compose
 ```bash
