@@ -81,7 +81,7 @@ def get_ativo_enriquecido_by_ativo_id(
 def get_ativos_para_enriquecimento(
     db: Session,
     limit: int = 100
-) -> list[AtivoEnriquecido]:
+):
     """
     Busca ativos que precisam ser enriquecidos
     
@@ -96,12 +96,10 @@ def get_ativos_para_enriquecimento(
         from app.models import Ativo
         
         # Buscar ativos que não têm dados enriquecidos ou que falharam no enriquecimento
-        subquery = db.query(AtivoEnriquecido.id_ativo).subquery()
-        
         ativos = db.query(Ativo).outerjoin(
             AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo
         ).filter(
-            (AtivoEnriquecido.id_ativo == None) | 
+            (AtivoEnriquecido.id_ativo.is_(None)) | 
             (AtivoEnriquecido.fl_erro_enriquecimento == True)
         ).limit(limit).all()
         
