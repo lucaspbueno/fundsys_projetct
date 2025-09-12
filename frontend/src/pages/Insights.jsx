@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+// import { Switch } from "@/components/ui/switch";
 import {
   BarChart3,
   TrendingUp,
@@ -27,7 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useOverview, useIndexadores, useEvolucaoMensal } from "@/hooks/useAnalytics";
 import { useFileAnalytics } from "@/hooks/useHistory";
-import { useEnrichmentStatus, useEnrichPendingAtivos } from "@/hooks/useEnrichment";
 import { useFundoDetalhes } from "@/hooks/useFundo";
 
 export default function Insights() {
@@ -84,8 +84,6 @@ export default function Insights() {
   }, [evolucaoData]);
   
   // Enrichment status and controls
-  const { data: enrichmentStatus } = useEnrichmentStatus();
-  const enrichPendingMutation = useEnrichPendingAtivos();
 
   // Use file-specific data if available, otherwise fall back to general overview
   const analyticsData = selectedFileId ? fileAnalyticsData : overviewData;
@@ -123,12 +121,6 @@ export default function Insights() {
     setEnrichedMode(!enrichedMode);
   }
 
-  function handleEnrichPending() {
-    enrichPendingMutation.mutate({ 
-      limit: 50, 
-      background: true 
-    });
-  }
 
   if (loading) {
     return (
@@ -180,66 +172,56 @@ export default function Insights() {
             </p>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-          {/* Toggle para dados enriquecidos */}
-          <Button
-            onClick={handleToggleEnrichedMode}
-            variant={enrichedMode ? "default" : "outline"}
-            className={cn(
-              "transition-all duration-200",
-              enrichedMode 
-                ? "bg-success hover:bg-success/90 text-success-foreground" 
-                : "border-success/20 text-success hover:bg-success/10 hover:border-success/30"
-            )}
-            size="sm"
-          >
-            <Target className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            <span className="hidden sm:inline">
-              {enrichedMode ? "Dados Enriquecidos" : "Dados Normais"}
-            </span>
-            <span className="sm:hidden">
-              {enrichedMode ? "Enriquecidos" : "Normais"}
-            </span>
-          </Button>
-          
-          {/* Botão para enriquecer ativos pendentes */}
-          {!selectedFileId && enrichmentStatus && enrichmentStatus.sem_enriquecimento > 0 && (
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Botões de ação */}
+          <div className="flex gap-2">
             <Button
-              onClick={handleEnrichPending}
-              disabled={enrichPendingMutation.isPending}
-              variant="outline"
-              className="border-warning/20 text-warning hover:bg-warning/10 hover:border-warning/30"
-              size="sm"
+              onClick={handleExport}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 h-12 px-4"
             >
-              <RefreshCw className={cn("h-4 w-4 sm:h-5 sm:w-5 mr-2", enrichPendingMutation.isPending && "animate-spin")} />
-              <span className="hidden sm:inline">
-                Enriquecer ({enrichmentStatus.sem_enriquecimento})
-              </span>
-              <span className="sm:hidden">
-                Enriquecer
-              </span>
+              <Download className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Exportar</span>
+              <span className="sm:hidden">Exportar</span>
             </Button>
-          )}
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 h-12 px-4"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Atualizar</span>
+              <span className="sm:hidden">Atualizar</span>
+            </Button>
+          </div>
           
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30"
-            size="sm"
-          >
-            <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            <span className="hidden sm:inline">Atualizar</span>
-            <span className="sm:hidden">Atualizar</span>
-          </Button>
-          <Button
-            onClick={handleExport}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
-            size="sm"
-          >
-            <Download className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            <span className="hidden sm:inline">Exportar</span>
-            <span className="sm:hidden">Exportar</span>
-          </Button>
+          {/* Toggle para dados enriquecidos */}
+          <div className="flex items-center gap-3 p-4 bg-card/50 rounded-lg border border-border/50 flex-1">
+            <div className="flex items-center gap-3">
+              <Target className="h-5 w-5 text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">
+                  {enrichedMode ? "Dados Enriquecidos" : "Dados Normais"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {enrichedMode ? "Informações da ANBIMA" : "Dados originais do arquivo"}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setEnrichedMode(!enrichedMode)}
+              className={cn(
+                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ml-auto",
+                enrichedMode ? "bg-success" : "bg-input"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-4 w-4 transform rounded-full bg-background shadow-lg transition-transform",
+                  enrichedMode ? "translate-x-6" : "translate-x-1"
+                )}
+              />
+            </button>
+          </div>
         </div>
       </div>
 
