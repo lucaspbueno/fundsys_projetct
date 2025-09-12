@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   <img src="https://img.shields.io/badge/-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
   <img src="https://img.shields.io/badge/-React%20Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white" />
+  <img src="https://img.shields.io/badge/-shadcn/ui-000000?style=for-the-badge&logo=storybook&logoColor=white" />
   <img src="https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/-Poetry-60A5FA?style=for-the-badge&logo=poetry&logoColor=white" />
 </div>
@@ -36,19 +37,18 @@
   - [Estrutura de Pastas](#estrutura-de-pastas)
   - [Pré-requisitos](#pré-requisitos)
   - [Como Rodar](#como-rodar)
-    - [5.1 Clonar o repositório](#51-clonar-o-repositório)
-    - [5.2 Configurar variáveis de ambiente](#52-configurar-variáveis-de-ambiente)
-    - [5.3 Subir com Docker Compose](#53-subir-com-docker-compose)
-    - [5.4 Acompanhar logs](#54-acompanhar-logs)
-    - [5.5 Testes rápidos](#55-testes-rápidos)
-    - [5.6 Encerrar/limpar](#56-encerrarlimpar)
+    - [Clonar o repositório](#clonar-o-repositório)
+    - [Configurar variáveis de ambiente](#configurar-variáveis-de-ambiente)
+    - [Subir com Docker Compose](#subir-com-docker-compose)
+    - [Acompanhar logs](#acompanhar-logs)
+    - [Testes rápidos](#testes-rápidos)
   - [Portas \& URLs](#portas--urls)
   - [Endpoints](#endpoints)
-    - [Backend API](#backend-api)
-      - [Upload de Arquivos](#upload-de-arquivos)
-      - [Analytics](#analytics)
-      - [Histórico](#histórico)
-    - [Frontend](#frontend-1)
+    - [Upload de Arquivos](#upload-de-arquivos)
+    - [Analytics](#analytics)
+    - [Histórico](#histórico)
+    - [Fundos](#fundos)
+    - [Enriquecimento ANBIMA](#enriquecimento-anbima)
   - [Funcionalidades Principais](#funcionalidades-principais)
     - [📤 Upload e Processamento](#-upload-e-processamento)
     - [📊 Analytics e Insights](#-analytics-e-insights)
@@ -61,6 +61,9 @@
     - [🎨 **Versão 0.3.0** - Frontend](#-versão-030---frontend)
     - [📊 **Versão 0.4.0** - Analytics](#-versão-040---analytics)
     - [🔄 **Versão 0.5.0** - Refinamentos](#-versão-050---refinamentos)
+    - [📈 **Versão 0.6.0** - Enriquecimento de Ativos](#-versão-060---enriquecimento-de-ativos)
+    - [💰 **Versão 0.7.0** - Fundos de Investimento](#-versão-070---fundos-de-investimento)
+    - [🎨 **Versão 0.8.0** - UX \& UI Refinements](#-versão-080---ux--ui-refinements)
   - [Autor](#autor)
 
 ---
@@ -71,7 +74,8 @@ O **FundSys** é um sistema completo para gestão de fundos de investimento que 
 
 - **Upload e processamento** de arquivos XML de posições de fundos
 - **Análise e insights** com gráficos e métricas detalhadas
-- **Histórico de lotes** enviados com filtros e busca
+- **Histórico de lotes e fundos** enviados com filtros e busca
+- **Enriquecimento automático** de ativos com dados da ANBIMA
 - **Interface responsiva** com modo claro/escuro
 - **Arquitetura MSC** (Model-Service-Controller) no backend
 - **Persistência robusta** com PostgreSQL e migrações automáticas
@@ -98,7 +102,7 @@ sequenceDiagram
     U->>F: Upload arquivo XML
     F->>B: POST /api/file/upload_files
     B->>B: Parse XML → Extrair dados
-    B->>DB: Persistir (Lote, Ativo, Posição, Indexador)
+    B->>DB: Persistir (Lote, Ativo, Posição, Indexador, Fundo)
     B->>F: Resposta com sucesso
     F->>U: Feedback visual
     
@@ -110,9 +114,15 @@ sequenceDiagram
     
     U->>F: Acessar Histórico
     F->>B: GET /api/history/*
-    B->>DB: Consultar lotes enviados
-    B->>F: Lista de lotes
+    B->>DB: Consultar lotes/fundos enviados
+    B->>F: Lista detalhada
     F->>U: Exibir histórico
+    
+    U->>F: Enriquecer Ativos
+    F->>B: POST /api/enriquecimento/*
+    B->>DB: Buscar dados ANBIMA
+    B->>F: Dados enriquecidos
+    F->>U: Feedback visual
 ```
 
 ---
@@ -126,20 +136,23 @@ sequenceDiagram
 - **Pydantic** (validação de dados)
 - **Poetry** (gerenciamento de dependências)
 - **Docker** (containerização)
+- **BeautifulSoup4 / Requests** (coleta e parsing de dados ANBIMA)
 
 ### Frontend
-- **React 18** + **TypeScript**
+- **React 19**
 - **Vite** (build tool)
 - **Tailwind CSS** (estilização)
 - **React Query** (gerenciamento de estado)
 - **Axios** (cliente HTTP)
 - **Lucide React** (ícones)
 - **shadcn/ui** (componentes)
+- **Hooks customizados** (`useTheme`, `usePageTitle`)
 
 ### DevOps
 - **Docker Compose** (orquestração)
 - **Alembic** (migrações automáticas)
-- **Logging estruturado**
+- **Logging estruturado** (com stack trace)
+- **Entrypoint script** (aguarda banco e roda migrações)
 
 ---
 
@@ -153,22 +166,22 @@ fundsys-project/
 │   │   ├── services/        # Regras de negócio
 │   │   ├── models/          # Modelos SQLAlchemy
 │   │   ├── schemas/         # Schemas Pydantic
-│   │   ├── DTOs/           # Data Transfer Objects
-│   │   ├── persiste/       # Camada de persistência
-│   │   │   ├── queries/    # Consultas específicas
-│   │   │   └── util/       # Funções de inserção
-│   │   ├── migrations/     # Migrações Alembic
-│   │   └── config/         # Configurações
-│   ├── main.py             # Aplicação FastAPI
+│   │   ├── DTOs/            # Data Transfer Objects
+│   │   ├── persiste/        # Camada de persistência
+│   │   │   ├── queries/     # Consultas específicas
+│   │   │   └── util/        # Funções de inserção
+│   │   ├── migrations/      # Migrações Alembic
+│   │   └── config/          # Configurações
+│   ├── main.py              # Aplicação FastAPI
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/     # Componentes React
-│   │   ├── pages/         # Páginas da aplicação
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── routes/        # Configuração de rotas
-│   │   └── styles/        # Estilos Tailwind
-│   ├── public/            # Arquivos estáticos
+│   │   ├── components/      # Componentes React
+│   │   ├── pages/           # Páginas da aplicação
+│   │   ├── hooks/           # Custom hooks
+│   │   ├── routes/          # Configuração de rotas
+│   │   └── styles/          # Estilos Tailwind
+│   ├── public/              # Arquivos estáticos
 │   └── Dockerfile
 └── docker-compose.yaml
 ```
@@ -185,68 +198,30 @@ fundsys-project/
 
 ## Como Rodar
 
-### 5.1 Clonar o repositório
+### Clonar o repositório
 ```bash
 git clone git@github.com:lucaspbueno/fundsys-project.git
 cd fundsys-project
 ```
 
-### 5.2 Configurar variáveis de ambiente
-Na raiz do projeto existe um arquivo de exemplo com as variáveis já configuradas:
-
+### Configurar variáveis de ambiente
 ```bash
 mv .env-exemple .env
 ```
 
-As variáveis já estão configuradas no arquivo de exemplo. Se necessário, você pode ajustar as configurações editando o arquivo `.env`
-
-### 5.3 Subir com Docker Compose
+### Subir com Docker Compose
 ```bash
 docker compose up -d --build
 ```
 
-Verifique o status:
-```bash
-docker compose ps
-```
-
-### 5.4 Acompanhar logs
-**Todos os serviços:**
+### Acompanhar logs
 ```bash
 docker compose logs -f
 ```
 
-**Serviço específico:**
+### Testes rápidos
 ```bash
-docker logs -f fundsys_api
-docker logs -f fundsys_frontend
-docker logs -f fundsys_db
-```
-
-### 5.5 Testes rápidos
-```bash
-# Health check da API
-curl -s http://localhost:8000/ | jq .
-
-# Testar upload de arquivo
-curl -X POST "http://localhost:8000/api/file/upload_files" \
-  -F "files=@seu_arquivo.xml" \
-  -H "accept: application/json"
-
-# Testar analytics
 curl -s http://localhost:8000/api/analytics/overview | jq .
-
-# Testar histórico
-curl -s http://localhost:8000/api/history/files | jq .
-```
-
-### 5.6 Encerrar/limpar
-```bash
-# Parar serviços
-docker compose down
-
-# Parar e remover volumes (apaga dados)
-docker compose down -v
 ```
 
 ---
@@ -262,103 +237,87 @@ docker compose down -v
 
 ## Endpoints
 
-### Backend API
-
-#### Upload de Arquivos
+### Upload de Arquivos
 - `POST /api/file/upload_files` → Upload e processamento de XML
 
-#### Analytics
-- `GET /api/analytics/overview` → Visão geral dos dados
-- `GET /api/analytics/indexadores` → Distribuição por indexadores
-- `GET /api/analytics/ativos` → Análise de ativos
-- `GET /api/analytics/evolucao-mensal` → Evolução mensal
+### Analytics
+- `GET /api/analytics/overview`
+- `GET /api/analytics/indexadores`
+- `GET /api/analytics/ativos`
+- `GET /api/analytics/evolucao-mensal`
 
-#### Histórico
-- `GET /api/history/files` → Lista lotes enviados
-- `GET /api/history/files/{lote_id}` → Detalhes de lote específico
-- `GET /api/history/files/{lote_id}/analytics` → Analytics de lote específico
+### Histórico
+- `GET /api/history/files`
+- `GET /api/history/files/{id}`
+- `GET /api/history/files/{id}/analytics`
 
-### Frontend
+### Fundos
+- `POST /api/fundos/upload`
+- `GET /api/fundos`
+- `GET /api/fundos/{id}`
 
-- `/` → Página inicial (upload)
-- `/insights` → Analytics e gráficos
-- `/history` → Histórico de lotes
-- `/ajuda` → Página de ajuda
+### Enriquecimento ANBIMA
+- `POST /api/enriquecimento/start`
+- `GET /api/enriquecimento/status`
+- `GET /api/enriquecimento/ativos`
 
 ---
 
 ## Funcionalidades Principais
 
 ### 📤 Upload e Processamento
-- **Drag & Drop** para upload de arquivos XML
-- **Parse automático** de dados de fundos de investimento
-- **Validação** de dados com Pydantic
-- **Feedback visual** de sucesso/erro
+- Drag & Drop de arquivos XML
+- Parse automático de fundos e ativos
+- Validação com Pydantic
+- Feedback visual de sucesso/erro
 
 ### 📊 Analytics e Insights
-- **Visão geral** com métricas consolidadas
-- **Distribuição por indexadores** (DI1, IAP, PRE)
-- **Análise de ativos** com top performers
-- **Evolução mensal** dos investimentos
-- **Filtros** por lote específico
+- Visão geral consolidada
+- Distribuição por indexadores (DI1, IPCA, PRE)
+- Análise de ativos e evolução mensal
+- Filtros por fundo, data e ativo
 
 ### 📋 Histórico
-- **Lista cronológica** de lotes enviados
-- **Busca e filtros** por nome/data
-- **Detalhes completos** de cada lote
-- **Analytics específicos** por lote
+- Lista cronológica de lotes e fundos enviados
+- Busca e filtros avançados
+- Detalhes de cada fundo/lote
+- Analytics específicos
 
 ### 🎨 Interface
-- **Design minimalista** com paleta "baby green"
-- **Modo claro/escuro** responsivo
-- **Layout adaptativo** para todos os dispositivos
-- **Componentes reutilizáveis** (shadcn/ui)
+- Design minimalista
+- Modo claro/escuro (hook `useTheme`)
+- Hooks customizados (`usePageTitle`)
+- Sistema de notificações (sucesso, erro, aviso, info, confirmação)
 
 ### 🏗️ Arquitetura
-- **MSC Pattern** (Model-Service-Controller)
-- **Separação de responsabilidades** clara
-- **Migrações automáticas** com Alembic
-- **Logging estruturado** para debugging
-- **Validação robusta** de dados
+- MSC Pattern (Model-Service-Controller)
+- Migrações automáticas com Alembic
+- Logging estruturado e stack trace
+- Validação robusta de dados
 
 ---
 
 ## Histórico de Evolução
 
 ### 🚀 **Versão 0.1.0** - Setup Inicial
-- Configuração inicial do projeto
-- Setup do FastAPI + SQLAlchemy
-- Configuração do PostgreSQL
-- Estrutura básica de modelos
-
 ### 🏗️ **Versão 0.2.0** - Arquitetura MSC
-- Implementação da arquitetura Model-Service-Controller
-- Criação de DTOs e schemas Pydantic
-- Sistema de migrações com Alembic
-- Refatoração para Poetry
-
 ### 🎨 **Versão 0.3.0** - Frontend
-- Criação do frontend React + Vite
-- Implementação do sistema de upload
-- Interface com Tailwind CSS
-- Integração com React Query
-
 ### 📊 **Versão 0.4.0** - Analytics
-- Sistema de analytics e insights
-- Gráficos e visualizações
-- Página de histórico
-- Modo escuro/claro
-
 ### 🔄 **Versão 0.5.0** - Refinamentos
-- Melhorias de responsividade
-- Sistema de notificações
-- Otimizações de performance
-- Documentação completa
+### 📈 **Versão 0.6.0** - Enriquecimento de Ativos
+- Rotas ANBIMA, tabela `ativo_enriquecido`, execução em background
+
+### 💰 **Versão 0.7.0** - Fundos de Investimento
+- Upload, listagem e detalhes de fundos
+- Novo modelo `ArquivoOriginal`
+
+### 🎨 **Versão 0.8.0** - UX & UI Refinements
+- Hooks (`useTheme`, `usePageTitle`)
+- Notificações, modais e componentes shadcn/ui
+- Modo claro/escuro e ícones dinâmicos
 
 ---
 
 ## Autor
 
 Desenvolvido por [Lucas Bueno](https://github.com/lucaspbueno) 🚀
-
----
