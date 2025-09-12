@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from .ativo import Ativo
     from .orgao_financeiro import OrgaoFinanceiro
+    from .arquivo_original import ArquivoOriginal
 
 class FundoInvestimento(BaseModel, TimestampMixin):
     __tablename__ = "tb_fundo_investimento"
@@ -17,3 +18,4 @@ class FundoInvestimento(BaseModel, TimestampMixin):
 
     ativos          : Mapped[list["Ativo"]]               = relationship("Ativo",           back_populates="fundo")
     orgao_financeiro: Mapped[Optional["OrgaoFinanceiro"]] = relationship("OrgaoFinanceiro", back_populates="fundos")
+    arquivos_originais: Mapped[list["ArquivoOriginal"]]   = relationship("ArquivoOriginal", back_populates="fundo_investimento")
