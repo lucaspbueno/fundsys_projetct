@@ -12,6 +12,7 @@ async def upload_files_service(
     db      : Session,
     loader  : FileLoader,
     parser  : Parser,
+    fundo_id: int = None,
 ) -> List[ParsedBundleDTO]:
     """
     Lê cada arquivo, parseia o XML e retorna uma lista de ParsedBundleDTO,
@@ -69,4 +70,4 @@ async def upload_files_service(
                     )
                 )
 
-    return persist_bundles(db, bundles)
+    return persist_bundles(db, bundles, fundo_id)
