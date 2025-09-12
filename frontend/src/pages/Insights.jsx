@@ -73,7 +73,7 @@ export default function Insights() {
   usePageTitle(pageTitle, "/icons/fundsys-light.svg");
   
   // Hook para detectar tema
-  const theme = useTheme();
+  const { theme } = useTheme();
   
   // Calcular crescimento baseado na evolução mensal
   const crescimento = useMemo(() => {
