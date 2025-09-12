@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useOverview, useIndexadores, useEvolucaoMensal } from "@/hooks/useAnalytics";
 import { useFileAnalytics } from "@/hooks/useHistory";
 import { useFundoDetalhes } from "@/hooks/useFundo";
+import { useEnrichPendingAtivos } from "@/hooks/useEnrichment";
 
 export default function Insights() {
   const [searchParams] = useSearchParams();
@@ -44,6 +45,11 @@ export default function Insights() {
   
   const [appliedFilters, setAppliedFilters] = useState({});
   const [enrichedMode, setEnrichedMode] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [isClearingFilters, setIsClearingFilters] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   // Use fund-specific analytics if fund ID is provided, otherwise use general overview
   const { data: fundoData, isLoading: fundoLoading } = useFundoDetalhes(selectedFundoId);
@@ -51,6 +57,9 @@ export default function Insights() {
   const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview(enrichedMode, selectedFundoId, appliedFilters);
   const { data: indexadoresData, isLoading: indexadoresLoading } = useIndexadores();
   const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal(null, appliedFilters);
+  
+  // Hook para enriquecimento real
+  const enrichPendingMutation = useEnrichPendingAtivos();
   
   // Calcular crescimento baseado na evolução mensal
   const crescimento = useMemo(() => {
@@ -93,23 +102,77 @@ export default function Insights() {
     setFilters(prev => ({ ...prev, [key]: value }));
   }
 
-  function handleApplyFilters() {
-    // Aplicar os filtros digitados
-    setAppliedFilters({ ...filters });
+  async function handleApplyFilters() {
+    setIsApplyingFilters(true);
+    
+    try {
+      // Simular delay para mostrar o loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Aplicar os filtros digitados
+      setAppliedFilters({ ...filters });
+      
+      addNotification('success', 'Filtros aplicados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aplicar filtros:', error);
+      addNotification('error', 'Erro ao aplicar filtros. Tente novamente mais tarde.');
+    } finally {
+      setIsApplyingFilters(false);
+    }
   }
 
-  function handleClearFilters() {
-    setFilters({
-      dateFrom: "",
-      dateTo: "",
-      indexador: "",
-      ativo: "",
-    });
-    setAppliedFilters({});
+  async function handleClearFilters() {
+    setIsClearingFilters(true);
+    
+    try {
+      // Simular delay para mostrar o loading
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Limpar os filtros
+      setFilters({
+        dateFrom: "",
+        dateTo: "",
+        indexador: "",
+        ativo: "",
+      });
+      setAppliedFilters({});
+      
+      addNotification('success', 'Filtros limpos com sucesso!');
+    } catch (error) {
+      console.error('Erro ao limpar filtros:', error);
+      addNotification('error', 'Erro ao limpar filtros. Tente novamente mais tarde.');
+    } finally {
+      setIsClearingFilters(false);
+    }
   }
 
-  function handleRefresh() {
-    refetchOverview();
+  function addNotification(type, message) {
+    const id = Date.now();
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  }
+
+  function removeNotification(id) {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    
+    try {
+      await refetchOverview();
+      addNotification('success', 'Dados atualizados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+      addNotification('error', 'Erro ao atualizar dados. Tente novamente mais tarde.');
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   function handleExport() {
@@ -117,8 +180,34 @@ export default function Insights() {
     console.log("Exportando dados...");
   }
 
-  function handleToggleEnrichedMode() {
-    setEnrichedMode(!enrichedMode);
+
+  async function handleToggleEnrichedMode() {
+    // Se está ativando o modo enriquecido
+    if (!enrichedMode) {
+      setIsEnriching(true);
+      
+      try {
+        // Chamada real para a API de enriquecimento
+        const result = await enrichPendingMutation.mutateAsync({
+          limit: 50,
+          background: false
+        });
+        
+        // Se chegou aqui, foi sucesso
+        setEnrichedMode(true);
+        addNotification('success', `Dados enriquecidos com sucesso! ${result.enriquecidos || 0} ativos processados.`);
+        
+      } catch (error) {
+        // Se falhou, manter o toggle desativado
+        console.error('Erro no enriquecimento:', error);
+        addNotification('error', 'Erro ao enriquecer dados da ANBIMA. Tente novamente mais tarde.');
+      } finally {
+        setIsEnriching(false);
+      }
+    } else {
+      // Se está desativando, apenas desativar
+      setEnrichedMode(false);
+    }
   }
 
 
@@ -135,6 +224,38 @@ export default function Insights() {
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map(notification => (
+          <div
+            key={notification.id}
+            className={cn(
+              "flex items-center gap-3 p-4 rounded-lg shadow-lg border backdrop-blur-sm max-w-sm animate-in slide-in-from-right-5 duration-300",
+              notification.type === 'error' 
+                ? "bg-destructive/90 text-destructive-foreground border-destructive/20" 
+                : "bg-success/90 text-success-foreground border-success/20"
+            )}
+          >
+            <div className="flex-1">
+              <p className="text-sm font-medium">
+                {notification.type === 'error' ? 'Erro de Enriquecimento' : 'Sucesso'}
+              </p>
+              <p className="text-xs opacity-90 mt-1">
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className="text-current/70 hover:text-current transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
@@ -185,12 +306,20 @@ export default function Insights() {
             </Button>
             <Button
               onClick={handleRefresh}
+              disabled={isRefreshing}
               variant="outline"
-              className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 h-12 px-4"
+              className={cn(
+                "border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 h-12 px-4",
+                isRefreshing && "opacity-50 cursor-not-allowed"
+              )}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Atualizar</span>
-              <span className="sm:hidden">Atualizar</span>
+              <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
+              <span className="hidden sm:inline">
+                {isRefreshing ? "Atualizando..." : "Atualizar"}
+              </span>
+              <span className="sm:hidden">
+                {isRefreshing ? "Atualizando..." : "Atualizar"}
+              </span>
             </Button>
           </div>
           
@@ -200,24 +329,32 @@ export default function Insights() {
               <Target className="h-5 w-5 text-muted-foreground" />
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground">
-                  {enrichedMode ? "Dados Enriquecidos" : "Dados Normais"}
+                  {isEnriching ? "Enriquecendo..." : enrichedMode ? "Dados Enriquecidos" : "Dados Normais"}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {enrichedMode ? "Informações da ANBIMA" : "Dados originais do arquivo"}
+                  {isEnriching 
+                    ? "Buscando informações da ANBIMA..." 
+                    : enrichedMode 
+                      ? "Informações da ANBIMA" 
+                      : "Dados originais do arquivo"
+                  }
                 </span>
               </div>
             </div>
             <button
-              onClick={() => setEnrichedMode(!enrichedMode)}
+              onClick={handleToggleEnrichedMode}
+              disabled={isEnriching}
               className={cn(
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ml-auto",
-                enrichedMode ? "bg-success" : "bg-input"
+                enrichedMode ? "bg-success" : "bg-input",
+                isEnriching && "opacity-50 cursor-not-allowed"
               )}
             >
               <span
                 className={cn(
                   "inline-block h-4 w-4 transform rounded-full bg-background shadow-lg transition-transform",
-                  enrichedMode ? "translate-x-6" : "translate-x-1"
+                  enrichedMode ? "translate-x-6" : "translate-x-1",
+                  isEnriching && "animate-pulse"
                 )}
               />
             </button>
@@ -313,21 +450,29 @@ export default function Insights() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
-            <Button
-              onClick={handleApplyFilters}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              size="sm"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Aplicar Filtros
-            </Button>
+             <Button
+               onClick={handleApplyFilters}
+               disabled={isApplyingFilters}
+               className={cn(
+                 "bg-primary hover:bg-primary/90 text-primary-foreground",
+                 isApplyingFilters && "opacity-50 cursor-not-allowed"
+               )}
+               size="sm"
+             >
+               <Filter className={cn("h-4 w-4 mr-2", isApplyingFilters && "animate-spin")} />
+               {isApplyingFilters ? "Aplicando..." : "Aplicar Filtros"}
+             </Button>
             <Button
               onClick={handleClearFilters}
+              disabled={isClearingFilters}
               variant="outline"
-              className="border-muted-foreground/20 text-muted-foreground hover:bg-muted/10"
+              className={cn(
+                "border-muted-foreground/20 text-muted-foreground hover:bg-muted/10",
+                isClearingFilters && "opacity-50 cursor-not-allowed"
+              )}
               size="sm"
             >
-              Limpar Filtros
+              {isClearingFilters ? "Limpando..." : "Limpar Filtros"}
             </Button>
             {Object.keys(appliedFilters).some(key => appliedFilters[key]) && (
               <div className="flex items-center gap-2 text-sm text-success">
