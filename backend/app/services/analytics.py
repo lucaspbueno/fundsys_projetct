@@ -17,10 +17,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_overview_service(db: Session) -> OverviewResponse:
+def get_overview_service(db: Session, fundo_id: Optional[int] = None, enriched: bool = False) -> OverviewResponse:
     """Service para buscar overview geral"""
     try:
-        data = get_overview_data(db)
+        if fundo_id:
+            from app.persiste.queries.fundo_analytics import get_fundo_analytics_data
+            data = get_fundo_analytics_data(db, fundo_id, enriched)
+        else:
+            data = get_overview_data(db, enriched)
         return OverviewResponse(**data)
     except Exception as e:
         logger.error(f"Erro no service de overview: {e}")
@@ -39,13 +43,19 @@ def get_indexadores_service(db: Session) -> IndexadoresResponse:
 
 def get_ativos_service(
     db: Session, 
+    fundo_id: Optional[int] = None,
     indexador: Optional[str] = None, 
     limit: int = 50, 
-    offset: int = 0
+    offset: int = 0,
+    enriched: bool = False
 ) -> AtivosResponse:
     """Service para buscar dados dos ativos"""
     try:
-        data = get_ativos_data(db, indexador, limit, offset)
+        if fundo_id:
+            from app.persiste.queries.fundo_analytics import get_fundo_ativos_data
+            data = get_fundo_ativos_data(db, fundo_id, indexador, limit, offset, enriched)
+        else:
+            data = get_ativos_data(db, indexador, limit, offset, enriched)
         return AtivosResponse(**data)
     except Exception as e:
         logger.error(f"Erro no service de ativos: {e}")

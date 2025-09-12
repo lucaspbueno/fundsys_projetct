@@ -1,10 +1,16 @@
 #!/bin/sh
 set -e
 
-# Executa as migrações do banco de dados
-poetry run alembic -c /fundsys_project/alembic.ini upgrade head
+# Aguarda o banco estar disponível
+echo "Aguardando banco de dados..."
+sleep 5
+
+# Executa as migrações do banco de dados (com tratamento de erro)
+echo "Executando migrações..."
+poetry run alembic -c /fundsys_project/alembic.ini upgrade head || echo "Migrações falharam, continuando..."
 
 # Inicia a aplicação com hot-reload
+echo "Iniciando aplicação..."
 exec poetry run uvicorn main:app \
   --host 0.0.0.0 \
   --port 8000 \

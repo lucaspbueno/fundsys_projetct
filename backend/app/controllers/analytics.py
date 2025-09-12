@@ -21,10 +21,14 @@ logger = logging.getLogger(__name__)
 analytics_routes = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 @analytics_routes.get("/overview", response_model=OverviewResponse)
-async def get_overview(db: Session = Depends(get_db)):
+async def get_overview(
+    db: Session = Depends(get_db),
+    fundo_id: Optional[int] = Query(None, description="ID do fundo específico"),
+    enriched: bool = Query(False, description="Incluir dados enriquecidos")
+):
     """Retorna visão geral dos dados do fundo"""
     try:
-        return get_overview_service(db)
+        return get_overview_service(db, fundo_id, enriched)
     except Exception as e:
         logger.error(f"Erro ao buscar overview: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
@@ -32,13 +36,15 @@ async def get_overview(db: Session = Depends(get_db)):
 @analytics_routes.get("/ativos", response_model=AtivosResponse)
 async def get_ativos(
     db: Session = Depends(get_db),
+    fundo_id: Optional[int] = Query(None, description="ID do fundo específico"),
     indexador: Optional[str] = Query(None, description="Filtrar por indexador"),
     limit: int = Query(50, ge=1, le=100, description="Limite de resultados"),
-    offset: int = Query(0, ge=0, description="Offset para paginação")
+    offset: int = Query(0, ge=0, description="Offset para paginação"),
+    enriched: bool = Query(False, description="Incluir dados enriquecidos")
 ):
     """Retorna lista de ativos com filtros"""
     try:
-        return get_ativos_service(db, indexador, limit, offset)
+        return get_ativos_service(db, fundo_id, indexador, limit, offset, enriched)
     except Exception as e:
         logger.error(f"Erro ao buscar ativos: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")

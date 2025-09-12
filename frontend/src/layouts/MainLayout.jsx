@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 
 export default function MainLayout({ children }) {
   return (
-    <div className="min-h-dvh bg-bg text-text">
+    <div className="min-h-dvh bg-background text-foreground">
       <Sidebar />
       {/* Empurra tudo para a direita no desktop */}
       <div className="md:pl-[260px]">

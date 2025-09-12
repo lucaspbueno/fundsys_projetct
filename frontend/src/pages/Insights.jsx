@@ -27,10 +27,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useOverview, useIndexadores, useEvolucaoMensal } from "@/hooks/useAnalytics";
 import { useFileAnalytics } from "@/hooks/useHistory";
+import { useEnrichmentStatus, useEnrichPendingAtivos } from "@/hooks/useEnrichment";
+import { useFundoDetalhes } from "@/hooks/useFundo";
 
 export default function Insights() {
   const [searchParams] = useSearchParams();
   const selectedFileId = searchParams.get('file');
+  const selectedFundoId = searchParams.get('fundo');
   
   const [filters, setFilters] = useState({
     dateFrom: "",
@@ -38,12 +41,50 @@ export default function Insights() {
     indexador: "",
     ativo: "",
   });
+  
+  const [enrichedMode, setEnrichedMode] = useState(false);
 
-  // Use file-specific analytics if file ID is provided, otherwise use general overview
+  // Use fund-specific analytics if fund ID is provided, otherwise use general overview
+  const { data: fundoData, isLoading: fundoLoading } = useFundoDetalhes(selectedFundoId);
   const { data: fileAnalyticsData, isLoading: fileAnalyticsLoading } = useFileAnalytics(selectedFileId);
-  const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview();
+  const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview(enrichedMode, selectedFundoId);
   const { data: indexadoresData, isLoading: indexadoresLoading } = useIndexadores();
   const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal();
+  
+  // Calcular crescimento baseado na evolução mensal
+  const crescimento = useMemo(() => {
+    if (!evolucaoData?.evolucao || evolucaoData.evolucao.length < 2) {
+      return 0;
+    }
+    
+    // Mapear nomes dos meses para números para ordenação correta
+    const mesesNomes = {
+      "Janeiro": 1, "Fevereiro": 2, "Março": 3, "Abril": 4, 
+      "Maio": 5, "Junho": 6, "Julho": 7, "Agosto": 8, 
+      "Setembro": 9, "Outubro": 10, "Novembro": 11, "Dezembro": 12
+    };
+    
+    // Ordenar meses por número (mais recente primeiro)
+    const meses = [...evolucaoData.evolucao].sort((a, b) => {
+      const numA = mesesNomes[a.mes] || 0;
+      const numB = mesesNomes[b.mes] || 0;
+      return numB - numA;
+    });
+    
+    const mesAtual = meses[0];
+    const mesAnterior = meses[1];
+    
+    if (!mesAnterior || mesAnterior.valor_total === 0) {
+      return 0;
+    }
+    
+    const crescimento = ((mesAtual.valor_total - mesAnterior.valor_total) / mesAnterior.valor_total) * 100;
+    return Math.round(crescimento * 10) / 10; // Arredondar para 1 casa decimal
+  }, [evolucaoData]);
+  
+  // Enrichment status and controls
+  const { data: enrichmentStatus } = useEnrichmentStatus();
+  const enrichPendingMutation = useEnrichPendingAtivos();
 
   // Use file-specific data if available, otherwise fall back to general overview
   const analyticsData = selectedFileId ? fileAnalyticsData : overviewData;
@@ -60,6 +101,17 @@ export default function Insights() {
   function handleExport() {
     // Implementar exportação de dados
     console.log("Exportando dados...");
+  }
+
+  function handleToggleEnrichedMode() {
+    setEnrichedMode(!enrichedMode);
+  }
+
+  function handleEnrichPending() {
+    enrichPendingMutation.mutate({ 
+      limit: 50, 
+      background: true 
+    });
   }
 
   if (loading) {
@@ -113,6 +165,46 @@ export default function Insights() {
           )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+          {/* Toggle para dados enriquecidos */}
+          <Button
+            onClick={handleToggleEnrichedMode}
+            variant={enrichedMode ? "default" : "outline"}
+            className={cn(
+              "transition-all duration-200",
+              enrichedMode 
+                ? "bg-success hover:bg-success/90 text-success-foreground" 
+                : "border-success/20 text-success hover:bg-success/10 hover:border-success/30"
+            )}
+            size="sm"
+          >
+            <Target className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <span className="hidden sm:inline">
+              {enrichedMode ? "Dados Enriquecidos" : "Dados Normais"}
+            </span>
+            <span className="sm:hidden">
+              {enrichedMode ? "Enriquecidos" : "Normais"}
+            </span>
+          </Button>
+          
+          {/* Botão para enriquecer ativos pendentes */}
+          {!selectedFileId && enrichmentStatus && enrichmentStatus.sem_enriquecimento > 0 && (
+            <Button
+              onClick={handleEnrichPending}
+              disabled={enrichPendingMutation.isPending}
+              variant="outline"
+              className="border-warning/20 text-warning hover:bg-warning/10 hover:border-warning/30"
+              size="sm"
+            >
+              <RefreshCw className={cn("h-4 w-4 sm:h-5 sm:w-5 mr-2", enrichPendingMutation.isPending && "animate-spin")} />
+              <span className="hidden sm:inline">
+                Enriquecer ({enrichmentStatus.sem_enriquecimento})
+              </span>
+              <span className="sm:hidden">
+                Enriquecer
+              </span>
+            </Button>
+          )}
+          
           <Button
             onClick={handleRefresh}
             variant="outline"
@@ -241,7 +333,9 @@ export default function Insights() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-warning">Crescimento</p>
-                <p className="text-2xl sm:text-3xl font-bold text-foreground">+12.5%</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                  {crescimento > 0 ? '+' : ''}{crescimento}%
+                </p>
               </div>
               <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-warning" />
             </div>
@@ -264,9 +358,9 @@ export default function Insights() {
               {analyticsData?.indexadores?.map((item, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm sm:text-base font-medium text-foreground">{item.nome}</span>
+                    <span className="text-sm sm:text-base font-medium text-foreground">{item.nome || 'N/A'}</span>
                     <span className="text-xs sm:text-sm text-muted-foreground">
-                      {item.quantidade} ativos ({item.percentual}%)
+                      {item.quantidade || 0} ativos ({(item.percentual || 0).toFixed(1)}%)
                     </span>
                   </div>
                   <div className="w-full bg-muted/30 rounded-full h-2 sm:h-3">
@@ -277,7 +371,7 @@ export default function Insights() {
                         index === 1 && "bg-info",
                         index === 2 && "bg-purple"
                       )}
-                      style={{ width: `${item.percentual}%` }}
+                      style={{ width: `${item.percentual || 0}%` }}
                     />
                   </div>
                 </div>
@@ -298,13 +392,49 @@ export default function Insights() {
             <div className="space-y-3 sm:space-y-4">
               {analyticsData?.top_ativos?.map((ativo, index) => (
                 <div key={index} className="flex items-center justify-between p-3 sm:p-4 bg-muted/20 hover:bg-muted/30 rounded-lg sm:rounded-xl transition-all duration-200">
-                  <div>
-                    <p className="text-sm sm:text-base font-medium text-foreground">{ativo.codigo}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">{ativo.indexador}</p>
+                  <div className="flex-1">
+                    <p className="text-sm sm:text-base font-medium text-foreground">{ativo.codigo || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{ativo.indexador || 'N/A'}</p>
+                    
+                    {/* Dados enriquecidos */}
+                    {enrichedMode && (ativo.serie || ativo.emissao || ativo.devedor || ativo.securitizadora) && (
+                      <div className="mt-2 space-y-1">
+                        {ativo.serie && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Série:</span> {ativo.serie || 'N/A'}
+                          </p>
+                        )}
+                        {ativo.emissao && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Emissão:</span> {ativo.emissao || 'N/A'}
+                          </p>
+                        )}
+                        {ativo.devedor && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Devedor:</span> {ativo.devedor || 'N/A'}
+                          </p>
+                        )}
+                        {ativo.securitizadora && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Securitizadora:</span> {ativo.securitizadora || 'N/A'}
+                          </p>
+                        )}
+                        {ativo.resgate_antecipado !== null && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Resgate Antecipado:</span> {ativo.resgate_antecipado ? "Sim" : "Não"}
+                          </p>
+                        )}
+                        {ativo.agente_fiduciario && (
+                          <p className="text-xs text-success">
+                            <span className="font-medium">Agente Fiduciário:</span> {ativo.agente_fiduciario}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm sm:text-base font-bold text-primary">
-                      R$ {ativo.valor.toLocaleString('pt-BR', {
+                      R$ {(ativo.valor || 0).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       })}
@@ -337,13 +467,13 @@ export default function Insights() {
                     <Calendar className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
                   </div>
                   <div>
-                    <p className="font-bold text-lg sm:text-xl text-foreground">{mes.mes}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">{mes.quantidade} ativos</p>
+                    <p className="font-bold text-lg sm:text-xl text-foreground">{mes.mes || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{mes.quantidade || 0} ativos</p>
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
                   <p className="text-lg sm:text-2xl font-bold text-primary">
-                    R$ {mes.valor.toLocaleString('pt-BR')}
+                    R$ {(mes.valor_total || 0).toLocaleString('pt-BR')}
                   </p>
                   <p className="text-xs sm:text-sm text-muted-foreground">Valor total</p>
                 </div>

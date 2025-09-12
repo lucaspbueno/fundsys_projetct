@@ -18,6 +18,7 @@ from app.persiste.util import (
 def persist_bundles(
     db: Session,
     bundles: List[ParsedBundleDTO],
+    fundo_id: int = None,
 ) -> List[ParsedBundleDTO]:
     """
     Persiste todos os bundles em uma única transação.
@@ -53,8 +54,9 @@ def persist_bundles(
             )
             lote = insert_lote(db, lote_model, commit=False)
 
-            # 3) Ativo (relaciona ao Lote e Indexador já persistidos/flushados)
+            # 3) Ativo (relaciona ao Lote, Indexador e Fundo já persistidos/flushados)
             ativo_model = Ativo(
+                id_fundo=fundo_id,  # Associar ao fundo de investimento
                 cd_ativo=ativo.cd_ativo,
                 cd_isin=ativo.cd_isin,
                 vl_pu_emissao=ativo.vl_pu_emissao,

@@ -4,6 +4,8 @@ from logging_config import logger
 from app.controllers.file import file_routes
 from app.controllers.analytics import analytics_routes
 from app.controllers.history import history_routes
+from app.controllers.enrichment import enrichment_routes
+from app.controllers.fundo_investimento import fundo_routes
 from app.config import get_settings
 import app.config.db
 
@@ -24,6 +26,8 @@ app.add_middleware(
 app.include_router(file_routes)
 app.include_router(analytics_routes)
 app.include_router(history_routes)
+app.include_router(enrichment_routes)
+app.include_router(fundo_routes)
 
 @app.get("/")
 def read_root():
