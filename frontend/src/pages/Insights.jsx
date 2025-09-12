@@ -48,6 +48,7 @@ export default function Insights() {
   const [isEnriching, setIsEnriching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [isClearingFilters, setIsClearingFilters] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
   // Use fund-specific analytics if fund ID is provided, otherwise use general overview
@@ -120,14 +121,29 @@ export default function Insights() {
     }
   }
 
-  function handleClearFilters() {
-    setFilters({
-      dateFrom: "",
-      dateTo: "",
-      indexador: "",
-      ativo: "",
-    });
-    setAppliedFilters({});
+  async function handleClearFilters() {
+    setIsClearingFilters(true);
+    
+    try {
+      // Simular delay para mostrar o loading
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Limpar os filtros
+      setFilters({
+        dateFrom: "",
+        dateTo: "",
+        indexador: "",
+        ativo: "",
+      });
+      setAppliedFilters({});
+      
+      addNotification('success', 'Filtros limpos com sucesso!');
+    } catch (error) {
+      console.error('Erro ao limpar filtros:', error);
+      addNotification('error', 'Erro ao limpar filtros. Tente novamente mais tarde.');
+    } finally {
+      setIsClearingFilters(false);
+    }
   }
 
   function addNotification(type, message) {
@@ -448,11 +464,15 @@ export default function Insights() {
              </Button>
             <Button
               onClick={handleClearFilters}
+              disabled={isClearingFilters}
               variant="outline"
-              className="border-muted-foreground/20 text-muted-foreground hover:bg-muted/10"
+              className={cn(
+                "border-muted-foreground/20 text-muted-foreground hover:bg-muted/10",
+                isClearingFilters && "opacity-50 cursor-not-allowed"
+              )}
               size="sm"
             >
-              Limpar Filtros
+              {isClearingFilters ? "Limpando..." : "Limpar Filtros"}
             </Button>
             {Object.keys(appliedFilters).some(key => appliedFilters[key]) && (
               <div className="flex items-center gap-2 text-sm text-success">
