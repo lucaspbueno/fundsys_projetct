@@ -12,13 +12,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFileHistory } from "@/hooks/useHistory";
+import { useFundos } from "@/hooks/useFundo";
 
 export default function History() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFundo, setSelectedFundo] = useState(null);
   const [pagination, setPagination] = useState({ limit: 10, offset: 0 });
 
   const { data: historyData, isLoading, refetch } = useFileHistory(pagination.limit, pagination.offset);
+  const { data: fundosData, isLoading: fundosLoading, refetch: refetchFundos } = useFundos(pagination.limit, pagination.offset);
 
   const handleSearch = (value) => {
     setSearchTerm(value);
@@ -26,13 +28,13 @@ export default function History() {
     setPagination({ limit: 10, offset: 0 });
   };
 
-  const handleFileSelect = (file) => {
-    setSelectedFile(file);
+  const handleFundoSelect = (fundo) => {
+    setSelectedFundo(fundo);
   };
 
-  const handleViewAnalytics = (file) => {
-    // Navigate to insights with selected file
-    window.location.href = `/insights?file=${file.id_lote}`;
+  const handleViewAnalytics = (fundo) => {
+    // Navigate to insights with selected fundo
+    window.location.href = `/insights?fundo=${fundo.id_fundo_investimento}`;
   };
 
   const handleLoadMore = () => {
@@ -44,15 +46,16 @@ export default function History() {
 
   const handleRefresh = () => {
     refetch();
+    refetchFundos();
   };
 
-  // Filter files based on search term
-  const filteredFiles = historyData?.files?.filter(file =>
-    file.nome_arquivo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    file.indexadores.some(idx => idx.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter fundos based on search term
+  const filteredFundos = fundosData?.fundos?.filter(fundo =>
+    fundo.nm_fundo_investimento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    fundo.ds_fundo_investimento.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  if (isLoading) {
+  if (fundosLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-64px)]">
         <div className="flex items-center gap-4">
@@ -69,10 +72,10 @@ export default function History() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-            Histórico de Arquivos
+            Histórico de Fundos
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground mt-1 sm:mt-2">
-            Visualize e gerencie arquivos enviados anteriormente
+            Visualize e gerencie fundos de investimento criados
           </p>
         </div>
         <div className="flex gap-2 sm:gap-4">
@@ -94,16 +97,16 @@ export default function History() {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl font-bold text-foreground">
             <Search className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            Buscar Arquivos
+            Buscar Fundos
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search" className="text-sm font-medium">Nome do arquivo ou indexador</Label>
+              <Label htmlFor="search" className="text-sm font-medium">Nome do fundo</Label>
               <Input
                 id="search"
-                placeholder="Ex: dados_fundo.xml ou DI1"
+                placeholder="Ex: fundo_de_investimento_1"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="border-border/50 focus:border-primary focus:ring-primary/20 text-sm"
@@ -123,36 +126,36 @@ export default function History() {
         </CardContent>
       </Card>
 
-      {/* Files List */}
+      {/* Fundos List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Files List */}
+        {/* Fundos List */}
         <div className="lg:col-span-2">
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl font-bold text-foreground">
                 <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                Arquivos Enviados ({filteredFiles.length})
+                Fundos Criados ({filteredFundos.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[600px] sm:h-[700px]">
                 <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  {filteredFiles.length === 0 ? (
+                  {filteredFundos.length === 0 ? (
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">
-                        {searchTerm ? "Nenhum arquivo encontrado" : "Nenhum arquivo enviado ainda"}
+                        {searchTerm ? "Nenhum fundo encontrado" : "Nenhum fundo criado ainda"}
                       </p>
                     </div>
                   ) : (
-                    filteredFiles.map((file) => (
+                    filteredFundos.map((fundo) => (
                       <Card
-                        key={file.id_lote}
+                        key={fundo.id_fundo_investimento}
                         className={cn(
                           "border-border/50 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer",
-                          selectedFile?.id_lote === file.id_lote && "ring-2 ring-primary/50 bg-primary/5"
+                          selectedFundo?.id_fundo_investimento === fundo.id_fundo_investimento && "ring-2 ring-primary/50 bg-primary/5"
                         )}
-                        onClick={() => handleFileSelect(file)}
+                        onClick={() => handleFundoSelect(fundo)}
                       >
                         <CardContent className="p-4 sm:p-6">
                           <div className="flex items-start justify-between gap-4">
@@ -160,7 +163,7 @@ export default function History() {
                               <div className="flex items-center gap-2 mb-2">
                                 <FileText className="h-4 w-4 text-primary flex-shrink-0" />
                                 <h3 className="font-semibold text-foreground truncate">
-                                  {file.nome_arquivo}
+                                  {fundo.nm_fundo_investimento}
                                 </h3>
                               </div>
                               
@@ -168,7 +171,7 @@ export default function History() {
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   <span>
-                                    {new Date(file.data_envio).toLocaleDateString('pt-BR', {
+                                    {new Date(fundo.data_criacao).toLocaleDateString('pt-BR', {
                                       day: '2-digit',
                                       month: '2-digit',
                                       year: 'numeric',
@@ -179,12 +182,12 @@ export default function History() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <BarChart3 className="h-3 w-3" />
-                                  <span>{file.quantidade_ativos} ativos</span>
+                                  <span>{fundo.total_ativos || 0} ativos</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <DollarSign className="h-3 w-3" />
                                   <span>
-                                    R$ {file.valor_total.toLocaleString('pt-BR', {
+                                    R$ {(fundo.valor_total || 0).toLocaleString('pt-BR', {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2
                                     })}
@@ -192,28 +195,16 @@ export default function History() {
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap gap-1">
-                                {file.indexadores.slice(0, 3).map((indexador, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                                  >
-                                    {indexador}
-                                  </span>
-                                ))}
-                                {file.indexadores.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                                    +{file.indexadores.length - 3} mais
-                                  </span>
-                                )}
-                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {fundo.ds_fundo_investimento}
+                              </p>
                             </div>
 
                             <div className="flex flex-col gap-2">
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleViewAnalytics(file);
+                                  handleViewAnalytics(fundo);
                                 }}
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
                                 size="sm"
@@ -233,7 +224,7 @@ export default function History() {
           </Card>
 
           {/* Load More Button */}
-          {historyData && filteredFiles.length < historyData.total && (
+          {fundosData && filteredFundos.length < (fundosData.total || 0) && (
             <div className="mt-4 text-center">
               <Button
                 onClick={handleLoadMore}
@@ -246,22 +237,22 @@ export default function History() {
           )}
         </div>
 
-        {/* File Details */}
+        {/* Fundo Details */}
         <div className="lg:col-span-1">
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl font-bold text-foreground">
               <HistoryIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              Detalhes do Arquivo
+              Detalhes do Fundo
             </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              {selectedFile ? (
+              {selectedFundo ? (
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold text-foreground mb-2">{selectedFile.nome_arquivo}</h3>
+                    <h3 className="font-semibold text-foreground mb-2">{selectedFundo.nm_fundo_investimento}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Enviado em {new Date(selectedFile.data_envio).toLocaleDateString('pt-BR', {
+                      Criado em {new Date(selectedFundo.data_criacao).toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -276,41 +267,30 @@ export default function History() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-muted-foreground">Total de Ativos</span>
-                      <span className="text-lg font-bold text-foreground">{selectedFile.quantidade_ativos}</span>
+                      <span className="text-lg font-bold text-foreground">{selectedFundo.total_ativos || 0}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-muted-foreground">Valor Total</span>
                       <span className="text-lg font-bold text-primary">
-                        R$ {selectedFile.valor_total.toLocaleString('pt-BR', {
+                        R$ {(selectedFundo.valor_total || 0).toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
                         })}
                       </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-muted-foreground">Indexadores</span>
-                      <span className="text-lg font-bold text-foreground">{selectedFile.indexadores.length}</span>
                     </div>
                   </div>
 
                   <Separator className="bg-border/50" />
 
                   <div>
-                    <h4 className="text-sm font-medium text-foreground mb-2">Indexadores</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedFile.indexadores.map((indexador, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                        >
-                          {indexador}
-                        </span>
-                      ))}
-                    </div>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Descrição</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedFundo.ds_fundo_investimento}
+                    </p>
                   </div>
 
                   <Button
-                    onClick={() => handleViewAnalytics(selectedFile)}
+                    onClick={() => handleViewAnalytics(selectedFundo)}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <Eye className="h-4 w-4 mr-2" />
@@ -321,7 +301,7 @@ export default function History() {
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    Selecione um arquivo para ver os detalhes
+                    Selecione um fundo para ver os detalhes
                   </p>
                 </div>
               )}

@@ -14,13 +14,21 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useUploadXml } from "@/hooks/useUploadXml";
+import { useUploadFundo } from "@/hooks/useFundo";
+import { SuccessModal, ErrorModal, WarningModal } from "@/components/ui/modal";
 
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null); // 'success', 'error', null
   const [uploadResult, setUploadResult] = useState(null);
-  const uploadMutation = useUploadXml();
+  const uploadMutation = useUploadFundo();
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    type: null, // 'success', 'error', 'warning'
+    title: '',
+    message: '',
+    fundoId: null
+  });
 
   // impedir que o browser tente abrir o arquivo ao soltar fora da dropzone
   useEffect(() => {
@@ -69,9 +77,9 @@ export default function Home() {
       return (
         <div className="flex items-center gap-4 p-6 rounded-2xl bg-primary/5 border border-primary/20 text-primary">
           <CheckCircle className="h-6 w-6 text-primary flex-shrink-0" />
-          <div className="flex-1">
+          <div>
             <p className="font-semibold text-base">Upload realizado com sucesso!</p>
-            <p className="text-sm text-primary/80 mt-1">
+            <p className="text-sm opacity-90">
               {uploadResult?.qtd_arquivos_processados} arquivo(s) processado(s) e {uploadResult?.data?.length || 0} registro(s) inserido(s) no banco.
             </p>
           </div>
@@ -83,11 +91,9 @@ export default function Home() {
       return (
         <div className="flex items-center gap-4 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 text-destructive">
           <AlertCircle className="h-6 w-6 text-destructive flex-shrink-0" />
-          <div className="flex-1">
+          <div>
             <p className="font-semibold text-base">Erro no upload</p>
-            <p className="text-sm text-destructive/80 mt-1">
-              Verifique o arquivo e tente novamente.
-            </p>
+            <p className="text-sm opacity-90">{uploadResult}</p>
           </div>
         </div>
       );
@@ -97,7 +103,7 @@ export default function Home() {
   }
 
   function fmtBytes(n) {
-    if (!n) return "0 B";
+    if (n === 0) return "0 B";
     const k = 1024;
     const units = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(n) / Math.log(k));
@@ -110,18 +116,41 @@ export default function Home() {
     setUploadStatus(null);
     setUploadResult(null);
     
-    uploadMutation.mutate(files, {
+    // Processar apenas o primeiro arquivo (um fundo por arquivo)
+    const arquivo = files[0];
+    
+    uploadMutation.mutate(arquivo, {
       onSuccess: (data) => {
-        setUploadStatus('success');
-        setUploadResult(data);
-        toast.success(`Arquivos processados com sucesso! ${data.qtd_arquivos_processados} arquivo(s) processado(s).`);
-        handleClear();
-        
-        // Limpar status de sucesso após 5 segundos
-        setTimeout(() => {
-          setUploadStatus(null);
-          setUploadResult(null);
-        }, 5000);
+        if (data.sucesso) {
+          setUploadStatus('success');
+          setUploadResult(data);
+          handleClear();
+          
+          setModalState({
+            isOpen: true,
+            type: 'success',
+            title: 'Fundo Criado com Sucesso!',
+            message: `O fundo foi criado com sucesso. Você pode visualizar suas análises na tela de Insights.`,
+            fundoId: data.fundo_id
+          });
+        } else {
+          if (data.arquivo_duplicado) {
+            setModalState({
+              isOpen: true,
+              type: 'warning',
+              title: 'Arquivo Já Analisado',
+              message: data.mensagem,
+              fundoId: data.fundo_existente?.id_fundo_investimento
+            });
+          } else {
+            setModalState({
+              isOpen: true,
+              type: 'error',
+              title: 'Erro no Upload',
+              message: data.mensagem
+            });
+          }
+        }
       },
       onError: (err) => {
         setUploadStatus('error');
@@ -129,172 +158,206 @@ export default function Home() {
           err?.response?.data?.detail ||
           err?.response?.data?.message ||
           err?.message ||
-          "Erro ao enviar arquivos. Tente novamente.";
-        toast.error(msg);
+          "Erro ao enviar arquivo. Tente novamente.";
         
-        // Limpar status de erro após 5 segundos
-        setTimeout(() => {
-          setUploadStatus(null);
-          setUploadResult(null);
-        }, 5000);
+        setModalState({
+          isOpen: true,
+          type: 'error',
+          title: 'Erro no Upload',
+          message: msg
+        });
       },
     });
   }
 
-  // ====== RENDER ======
-  if (!hasFiles) {
-    // estado vazio — tela centralizada
-    return (
-      <section className="grid place-items-center min-h-[calc(100dvh-64px)] p-4 sm:p-6">
-        <Card className="w-full max-w-2xl sm:max-w-4xl rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-          <CardHeader className="text-center pb-6 sm:pb-8 px-4 sm:px-6">
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">
-              Importar XML
-            </CardTitle>
-            <CardDescription className="text-base sm:text-lg text-muted-foreground">
-              Arraste o arquivo .xml ou clique para selecionar
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-6 sm:space-y-8 px-4 sm:px-6">
-            <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
-
-            <UploadStatus />
-
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <Button
-                onClick={handleProcess}
-                disabled={!hasFiles || isUploading}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
-                size="lg"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  "Enviar XML"
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleClear}
-                disabled={isUploading}
-                className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30"
-                size="lg"
-              >
-                Limpar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-    );
+  // Função para fechar modal
+  function closeModal() {
+    setModalState({
+      isOpen: false,
+      type: null,
+      title: '',
+      message: '',
+      fundoId: null
+    });
   }
 
-  // estado com arquivos — layout split
+  // Função para navegar para analytics
+  function goToAnalytics() {
+    if (modalState.fundoId) {
+      window.location.href = `/insights?fundo=${modalState.fundoId}`;
+    } else {
+      window.location.href = '/insights';
+    }
+  }
+
   return (
-    <section
-      className={cn(
-        "mx-auto w-full p-4 sm:p-6",
-        "grid gap-6 sm:gap-8",
-        // em telas grandes vira duas colunas: conteúdo | painel de arquivos
-        "lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_480px]"
-      )}
-    >
-      {/* Coluna esquerda: card com dropzone + ações */}
-      <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-        <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6">
-          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
-            Importar XML
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base text-muted-foreground">
-            Arraste os arquivos .xml ou clique para selecionar
-          </CardDescription>
-        </CardHeader>
+    <>
+      {/* Conteúdo principal */}
+      {!hasFiles ? (
+        // estado vazio — tela centralizada
+        <section className="mx-auto w-full max-w-4xl p-4 sm:p-6">
+          <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+            <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+                Importar XML
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base text-muted-foreground">
+                Arraste o arquivo .xml ou clique para selecionar
+              </CardDescription>
+            </CardHeader>
 
-        <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
-          <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
+            <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
+              <UploadStatus />
+            </CardContent>
+          </Card>
+        </section>
+      ) : (
+        // estado com arquivos — layout split
+        <section
+          className={cn(
+            "mx-auto w-full p-4 sm:p-6",
+            "grid gap-6 sm:gap-8",
+            // em telas grandes vira duas colunas: conteúdo | painel de arquivos
+            "lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_480px]"
+          )}
+        >
+          {/* Coluna esquerda: card com dropzone + ações */}
+          <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+            <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+                Importar XML
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base text-muted-foreground">
+                Arraste os arquivos .xml ou clique para selecionar
+              </CardDescription>
+            </CardHeader>
 
-          <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 sm:px-4 py-2">
-            <span className="font-medium">{files.length} arquivo(s)</span>
-            <span className="font-mono">{fmtBytes(totalSize)}</span>
-          </div>
-
-          <UploadStatus />
-
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-            <Button
-              onClick={handleProcess}
-              disabled={!hasFiles || isUploading}
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
-              size="lg"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                "Enviar XML"
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleClear}
-              disabled={isUploading}
-              className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30"
-              size="lg"
-            >
-              Limpar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Coluna direita: painel com lista de arquivos */}
-      <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
-        <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-          <CardTitle className="text-lg sm:text-xl font-bold text-foreground">Arquivos inseridos</CardTitle>
-          <CardDescription className="text-sm sm:text-base text-muted-foreground">Revise antes de enviar</CardDescription>
-        </CardHeader>
-        <Separator className="bg-border/50" />
-        <CardContent className="p-0">
-          <ScrollArea className="h-[400px] sm:h-[520px]">
-            <ul className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-              {files.map((f, idx) => (
-                <li
-                  key={`${f.name}-${f.size}-${idx}`}
-                  className={cn(
-                    "flex items-center gap-3 sm:gap-4 rounded-lg sm:rounded-xl border border-border/50 px-3 sm:px-4 py-2 sm:py-3",
-                    "bg-muted/20 hover:bg-muted/40 transition-all duration-200 hover:scale-[1.01] sm:hover:scale-[1.02]"
-                  )}
+            <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <Dropzone onFiles={handleAddFiles} disabled={isUploading} />
+              <UploadStatus />
+              
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button
+                  onClick={handleProcess}
+                  disabled={!hasFiles || isUploading}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
                 >
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary/70 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium truncate text-foreground">{f.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      {fmtBytes(f.size)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveAt(idx)}
-                    disabled={uploadMutation.isPending}
-                    aria-label={`Remover ${f.name}`}
-                    className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-    </section>
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Processando...</span>
+                      <span className="sm:hidden">Processando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      <span className="hidden sm:inline">Processar Arquivo</span>
+                      <span className="sm:hidden">Processar</span>
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleClear}
+                  variant="outline"
+                  disabled={isUploading}
+                  className="border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  size="lg"
+                >
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="hidden sm:inline">Limpar</span>
+                  <span className="sm:hidden">Limpar</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Coluna direita: lista de arquivos */}
+          <Card className="rounded-2xl sm:rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-xl">
+            <CardHeader className="pb-4 px-4 sm:px-6">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl font-bold text-foreground">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                Arquivo Selecionado
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({files.length})
+                </span>
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                {fmtBytes(totalSize)} total
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="px-4 sm:px-6">
+              <ScrollArea className="h-[300px] sm:h-[400px]">
+                <ul className="space-y-2 sm:space-y-3">
+                  {files.map((f, idx) => (
+                    <li
+                      key={`${f.name}-${f.size}-${idx}`}
+                      className={cn(
+                        "flex items-center gap-3 sm:gap-4 rounded-lg sm:rounded-xl border border-border/50 px-3 sm:px-4 py-2 sm:py-3",
+                        "bg-muted/20 hover:bg-muted/40 transition-all duration-200 hover:scale-[1.01] sm:hover:scale-[1.02]"
+                      )}
+                    >
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary/70 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium truncate text-foreground">{f.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {fmtBytes(f.size)}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveAt(idx)}
+                        disabled={uploadMutation.isPending}
+                        aria-label={`Remover ${f.name}`}
+                        className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+      
+      {/* Modais */}
+      {modalState.type === 'success' && (
+        <SuccessModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          title={modalState.title}
+          message={modalState.message}
+          actionLabel="Ver Análises"
+          onAction={goToAnalytics}
+        />
+      )}
+      
+      {modalState.type === 'error' && (
+        <ErrorModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          title={modalState.title}
+          message={modalState.message}
+        />
+      )}
+      
+      {modalState.type === 'warning' && (
+        <WarningModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          title={modalState.title}
+          message={modalState.message}
+          actionLabel="Ver Análises"
+          onAction={goToAnalytics}
+        />
+      )}
+    </>
   );
 }
+
