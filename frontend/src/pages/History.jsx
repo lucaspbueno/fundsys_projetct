@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useFileHistory } from "@/hooks/useHistory";
 import { useFundos } from "@/hooks/useFundo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function History() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +22,9 @@ export default function History() {
 
   const { data: historyData, isLoading, refetch } = useFileHistory(pagination.limit, pagination.offset);
   const { data: fundosData, isLoading: fundosLoading, refetch: refetchFundos } = useFundos(pagination.limit, pagination.offset);
+  
+  // Definir título e ícone da página
+  usePageTitle("Histórico - FundSys", "/icons/fundsys-light.svg");
 
   const handleSearch = (value) => {
     setSearchTerm(value);

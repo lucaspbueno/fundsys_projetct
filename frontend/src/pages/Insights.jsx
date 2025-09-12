@@ -30,6 +30,8 @@ import { useOverview, useIndexadores, useEvolucaoMensal } from "@/hooks/useAnaly
 import { useFileAnalytics } from "@/hooks/useHistory";
 import { useFundoDetalhes } from "@/hooks/useFundo";
 import { useEnrichPendingAtivos } from "@/hooks/useEnrichment";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function Insights() {
   const [searchParams] = useSearchParams();
@@ -60,6 +62,18 @@ export default function Insights() {
   
   // Hook para enriquecimento real
   const enrichPendingMutation = useEnrichPendingAtivos();
+  
+  // Definir título e ícone da página baseado no contexto
+  const pageTitle = selectedFileId 
+    ? `Analytics do Arquivo - FundSys`
+    : selectedFundoId 
+      ? `Insights do Fundo - FundSys`
+      : `Insights - FundSys`;
+  
+  usePageTitle(pageTitle, "/icons/fundsys-light.svg");
+  
+  // Hook para detectar tema
+  const theme = useTheme();
   
   // Calcular crescimento baseado na evolução mensal
   const crescimento = useMemo(() => {
@@ -231,14 +245,18 @@ export default function Insights() {
             key={notification.id}
             className={cn(
               "flex items-center gap-3 p-4 rounded-lg shadow-lg border backdrop-blur-sm max-w-sm animate-in slide-in-from-right-5 duration-300",
-              notification.type === 'error' 
-                ? "bg-destructive/90 text-destructive-foreground border-destructive/20" 
-                : "bg-success/90 text-success-foreground border-success/20"
+              theme === 'dark' 
+                ? notification.type === 'error'
+                  ? "bg-red-950/95 text-red-100 border-red-800/60"
+                  : "bg-green-950/95 text-green-100 border-green-800/60"
+                : notification.type === 'error'
+                  ? "bg-red-50/95 text-red-900 border-red-200/50"
+                  : "bg-green-50/95 text-green-900 border-green-200/50"
             )}
           >
             <div className="flex-1">
               <p className="text-sm font-medium">
-                {notification.type === 'error' ? 'Erro de Enriquecimento' : 'Sucesso'}
+                {notification.type === 'error' ? 'Erro' : 'Sucesso'}
               </p>
               <p className="text-xs opacity-90 mt-1">
                 {notification.message}
@@ -246,7 +264,10 @@ export default function Insights() {
             </div>
             <button
               onClick={() => removeNotification(notification.id)}
-              className="text-current/70 hover:text-current transition-colors"
+              className={cn(
+                "text-current/70 hover:text-current transition-colors p-1 rounded hover:bg-current/10",
+                theme === 'dark' ? "hover:bg-white/10" : "hover:bg-black/10"
+              )}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -309,7 +330,10 @@ export default function Insights() {
               disabled={isRefreshing}
               variant="outline"
               className={cn(
-                "border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 h-12 px-4",
+                "h-12 px-4",
+                theme === 'dark' 
+                  ? "bg-gray-800 border-gray-600 text-green-400 hover:bg-gray-700 hover:border-green-500"
+                  : "bg-white border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400",
                 isRefreshing && "opacity-50 cursor-not-allowed"
               )}
             >

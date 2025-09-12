@@ -16,12 +16,16 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadFundo } from "@/hooks/useFundo";
 import { SuccessModal, ErrorModal, WarningModal } from "@/components/ui/modal";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null); // 'success', 'error', null
   const [uploadResult, setUploadResult] = useState(null);
   const uploadMutation = useUploadFundo();
+  
+  // Definir título e ícone da página
+  usePageTitle("FundSys - Upload de Arquivos", "/icons/fundsys-light.svg");
   const [modalState, setModalState] = useState({
     isOpen: false,
     type: null, // 'success', 'error', 'warning'
