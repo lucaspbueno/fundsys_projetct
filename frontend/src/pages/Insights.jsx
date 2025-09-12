@@ -47,6 +47,7 @@ export default function Insights() {
   const [enrichedMode, setEnrichedMode] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
   // Use fund-specific analytics if fund ID is provided, otherwise use general overview
@@ -100,9 +101,23 @@ export default function Insights() {
     setFilters(prev => ({ ...prev, [key]: value }));
   }
 
-  function handleApplyFilters() {
-    // Aplicar os filtros digitados
-    setAppliedFilters({ ...filters });
+  async function handleApplyFilters() {
+    setIsApplyingFilters(true);
+    
+    try {
+      // Simular delay para mostrar o loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Aplicar os filtros digitados
+      setAppliedFilters({ ...filters });
+      
+      addNotification('success', 'Filtros aplicados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aplicar filtros:', error);
+      addNotification('error', 'Erro ao aplicar filtros. Tente novamente mais tarde.');
+    } finally {
+      setIsApplyingFilters(false);
+    }
   }
 
   function handleClearFilters() {
@@ -419,14 +434,18 @@ export default function Insights() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
-            <Button
-              onClick={handleApplyFilters}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              size="sm"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Aplicar Filtros
-            </Button>
+             <Button
+               onClick={handleApplyFilters}
+               disabled={isApplyingFilters}
+               className={cn(
+                 "bg-primary hover:bg-primary/90 text-primary-foreground",
+                 isApplyingFilters && "opacity-50 cursor-not-allowed"
+               )}
+               size="sm"
+             >
+               <Filter className={cn("h-4 w-4 mr-2", isApplyingFilters && "animate-spin")} />
+               {isApplyingFilters ? "Aplicando..." : "Aplicar Filtros"}
+             </Button>
             <Button
               onClick={handleClearFilters}
               variant="outline"
