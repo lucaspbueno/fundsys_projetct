@@ -170,7 +170,7 @@ class FundoInvestimentoService:
             
             # Buscar estatísticas do fundo
             from app.persiste.queries.fundo_analytics import get_fundo_analytics_data
-            analytics = get_fundo_analytics_data(db, fundo_id)
+            analytics = get_fundo_analytics_data(db, fundo_id, False, None, None, None, None)
             
             # Buscar arquivos do fundo
             arquivos = [

@@ -4,7 +4,15 @@ from app.models import Ativo, Indexador, Lote, Posicao, AtivoEnriquecido, FundoI
 from typing import Dict, Any, Optional
 from decimal import Decimal
 
-def get_fundo_analytics_data(db: Session, fundo_id: int, enriched: bool = False) -> Dict[str, Any]:
+def get_fundo_analytics_data(
+    db: Session, 
+    fundo_id: int, 
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    indexador: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Busca dados de analytics para um fundo específico
     
@@ -17,6 +25,8 @@ def get_fundo_analytics_data(db: Session, fundo_id: int, enriched: bool = False)
         Dict com dados de analytics do fundo
     """
     try:
+        from datetime import datetime
+        
         # Verificar se fundo existe
         fundo = db.query(FundoInvestimento).filter(
             FundoInvestimento.id_fundo_investimento == fundo_id
@@ -25,32 +35,51 @@ def get_fundo_analytics_data(db: Session, fundo_id: int, enriched: bool = False)
         if not fundo:
             return {}
         
-        # Total de ativos do fundo
-        total_ativos = db.query(Ativo).filter(
+        # Construir query base com joins necessários
+        base_query = db.query(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).filter(
             Ativo.id_fundo == fundo_id
-        ).count()
+        )
         
-        # Total de indexadores únicos do fundo
-        total_indexadores = db.query(Indexador).join(Ativo).filter(
-            Ativo.id_fundo == fundo_id
-        ).count()
+        # Aplicar filtros
+        if date_from:
+            try:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                base_query = base_query.filter(Posicao.dt_posicao >= date_from_obj)
+            except ValueError:
+                pass  # Ignorar data inválida
         
-        # Valor total do fundo (soma das posições)
-        valor_total = db.query(func.sum(Posicao.vl_principal)).join(Ativo).filter(
-            Ativo.id_fundo == fundo_id
-        ).scalar() or 0
+        if date_to:
+            try:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                base_query = base_query.filter(Posicao.dt_posicao <= date_to_obj)
+            except ValueError:
+                pass  # Ignorar data inválida
         
-        # Indexadores com contagem do fundo
-        indexadores_stats = db.query(
+        if indexador:
+            base_query = base_query.filter(Indexador.cd_indexador == indexador)
+        
+        if codigo_ativo:
+            base_query = base_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+        
+        # Total de ativos do fundo (com filtros aplicados)
+        total_ativos = base_query.count()
+        
+        # Total de indexadores únicos do fundo (com filtros aplicados)
+        total_indexadores = base_query.with_entities(Indexador.id_indexador).distinct().count()
+        
+        # Valor total do fundo (soma das posições com filtros aplicados)
+        valor_total = base_query.with_entities(func.sum(Posicao.vl_principal)).scalar() or 0
+        
+        # Indexadores com contagem do fundo (aplicar filtros)
+        indexadores_query = base_query.with_entities(
             Indexador.cd_indexador,
             func.count(Ativo.id_ativo).label('quantidade')
-        ).select_from(Indexador).join(Ativo, Indexador.id_indexador == Ativo.id_indexador).filter(
-            Ativo.id_fundo == fundo_id
-        ).group_by(Indexador.cd_indexador).all()
+        ).group_by(Indexador.cd_indexador)
+        indexadores_stats = indexadores_query.all()
         
-        # Top 5 ativos por valor do fundo
+        # Top 5 ativos por valor do fundo (aplicar filtros)
         if enriched:
-            top_ativos = db.query(
+            top_ativos_query = base_query.with_entities(
                 Ativo.cd_ativo,
                 Posicao.vl_principal,
                 Indexador.cd_indexador,
@@ -60,21 +89,15 @@ def get_fundo_analytics_data(db: Session, fundo_id: int, enriched: bool = False)
                 AtivoEnriquecido.securitizadora,
                 AtivoEnriquecido.resgate_antecipado,
                 AtivoEnriquecido.agente_fiduciario
-            ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(
-                Indexador, Ativo.id_indexador == Indexador.id_indexador
-            ).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo).filter(
-                Ativo.id_fundo == fundo_id
-            ).order_by(desc(Posicao.vl_principal)).limit(5).all()
+            ).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo).order_by(desc(Posicao.vl_principal)).limit(5)
+            top_ativos = top_ativos_query.all()
         else:
-            top_ativos = db.query(
+            top_ativos_query = base_query.with_entities(
                 Ativo.cd_ativo,
                 Posicao.vl_principal,
                 Indexador.cd_indexador
-            ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(
-                Indexador, Ativo.id_indexador == Indexador.id_indexador
-            ).filter(
-                Ativo.id_fundo == fundo_id
-            ).order_by(desc(Posicao.vl_principal)).limit(5).all()
+            ).order_by(desc(Posicao.vl_principal)).limit(5)
+            top_ativos = top_ativos_query.all()
         
         # Evolução mensal do fundo
         evolucao_mensal = db.query(
@@ -141,7 +164,10 @@ def get_fundo_ativos_data(
     indexador: Optional[str] = None, 
     limit: int = 50, 
     offset: int = 0,
-    enriched: bool = False
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Busca dados dos ativos de um fundo específico
@@ -158,24 +184,62 @@ def get_fundo_ativos_data(
         Dict com dados dos ativos do fundo
     """
     try:
+        from datetime import datetime
+        
         if enriched:
-            query = db.query(Ativo, Posicao, Indexador, AtivoEnriquecido).select_from(Ativo).join(
+            enriched_query = db.query(Ativo, Posicao, Indexador, AtivoEnriquecido).select_from(Ativo).join(
                 Posicao, Ativo.id_ativo == Posicao.id_ativo
             ).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).outerjoin(
                 AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo
             ).filter(Ativo.id_fundo == fundo_id)
         else:
-            query = db.query(Ativo, Posicao, Indexador).select_from(Ativo).join(
+            simple_query = db.query(Ativo, Posicao, Indexador).select_from(Ativo).join(
                 Posicao, Ativo.id_ativo == Posicao.id_ativo
             ).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).filter(
                 Ativo.id_fundo == fundo_id
             )
         
-        if indexador:
-            query = query.filter(Indexador.cd_indexador == indexador)
-        
-        ativos = query.offset(offset).limit(limit).all()
-        total = query.count()
+        # Aplicar filtros
+        if enriched:
+            if indexador:
+                enriched_query = enriched_query.filter(Indexador.cd_indexador == indexador)
+            if date_from:
+                try:
+                    date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                    enriched_query = enriched_query.filter(Posicao.dt_posicao >= date_from_obj)
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                    enriched_query = enriched_query.filter(Posicao.dt_posicao <= date_to_obj)
+                except ValueError:
+                    pass
+            if codigo_ativo:
+                enriched_query = enriched_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+            
+            ativos_enriched = enriched_query.offset(offset).limit(limit).all()
+            total = enriched_query.count()
+        else:
+            if indexador:
+                simple_query = simple_query.filter(Indexador.cd_indexador == indexador)
+            if date_from:
+                try:
+                    date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                    simple_query = simple_query.filter(Posicao.dt_posicao >= date_from_obj)
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                    simple_query = simple_query.filter(Posicao.dt_posicao <= date_to_obj)
+                except ValueError:
+                    pass
+            if codigo_ativo:
+                simple_query = simple_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+            
+            ativos_simple = simple_query.offset(offset).limit(limit).all()
+            total = simple_query.count()
         
         if enriched:
             return {
@@ -192,7 +256,7 @@ def get_fundo_ativos_data(
                         "resgate_antecipado": ativo_enriquecido.resgate_antecipado if ativo_enriquecido else None,
                         "agente_fiduciario": ativo_enriquecido.agente_fiduciario if ativo_enriquecido else None
                     }
-                    for ativo, posicao, indexador, ativo_enriquecido in ativos
+                    for ativo, posicao, indexador, ativo_enriquecido in ativos_enriched
                 ],
                 "total": total,
                 "limit": limit,
@@ -207,7 +271,7 @@ def get_fundo_ativos_data(
                         "indexador": indexador.cd_indexador,
                         "data_vencimento": ativo.dt_vencimento.isoformat() if ativo.dt_vencimento else None
                     }
-                    for ativo, posicao, indexador in ativos
+                    for ativo, posicao, indexador in ativos_simple
                 ],
                 "total": total,
                 "limit": limit,
