@@ -58,7 +58,7 @@ class AtivosResponse(BaseModel):
 
 class EvolucaoMensalItem(BaseModel):
     """Item da evolução mensal"""
-    mes: int
+    mes: str
     quantidade: int
     valor_total: Decimal
 

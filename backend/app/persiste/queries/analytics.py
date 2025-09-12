@@ -103,15 +103,17 @@ def get_ativos_data(
 ) -> Dict[str, Any]:
     """Busca dados dos ativos com filtros"""
     if enriched:
-        query = db.query(Ativo, Posicao, Indexador, AtivoEnriquecido).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo)
+        enriched_query = db.query(Ativo, Posicao, Indexador, AtivoEnriquecido).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo)
+        if indexador:
+            enriched_query = enriched_query.filter(Indexador.cd_indexador == indexador)
+        ativos_enriched = enriched_query.offset(offset).limit(limit).all()
+        total = enriched_query.count()
     else:
-        query = db.query(Ativo, Posicao, Indexador).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador)
-    
-    if indexador:
-        query = query.filter(Indexador.cd_indexador == indexador)
-    
-    ativos = query.offset(offset).limit(limit).all()
-    total = query.count()
+        simple_query = db.query(Ativo, Posicao, Indexador).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador)
+        if indexador:
+            simple_query = simple_query.filter(Indexador.cd_indexador == indexador)
+        ativos_simple = simple_query.offset(offset).limit(limit).all()
+        total = simple_query.count()
     
     if enriched:
         return {
@@ -128,7 +130,7 @@ def get_ativos_data(
                     "resgate_antecipado": ativo_enriquecido.resgate_antecipado if ativo_enriquecido else None,
                     "agente_fiduciario": ativo_enriquecido.agente_fiduciario if ativo_enriquecido else None
                 }
-                for ativo, posicao, indexador, ativo_enriquecido in ativos
+                for ativo, posicao, indexador, ativo_enriquecido in ativos_enriched
             ],
             "total": total,
             "limit": limit,
@@ -143,7 +145,7 @@ def get_ativos_data(
                     "indexador": indexador.cd_indexador,
                     "data_vencimento": ativo.dt_vencimento.isoformat() if ativo.dt_vencimento else None
                 }
-                for ativo, posicao, indexador in ativos
+                for ativo, posicao, indexador in ativos_simple
             ],
             "total": total,
             "limit": limit,
@@ -169,10 +171,17 @@ def get_evolucao_mensal_data(
     
     evolucao = query.all()
     
+    # Mapeamento de números para nomes dos meses
+    meses_nomes = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+        5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+        9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+    }
+    
     return {
         "evolucao": [
             {
-                "mes": int(item.mes),
+                "mes": meses_nomes.get(int(item.mes), f"Mês {int(item.mes)}"),
                 "quantidade": item.quantidade,
                 "valor_total": float(item.valor_total or 0)
             }
