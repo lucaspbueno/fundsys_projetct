@@ -85,14 +85,16 @@ async def enrich_multiple_ativos(
 @enrichment_routes.post("/enrich/pending", response_model=BulkEnrichmentResponse)
 async def enrich_pending_ativos(
     limit: int = Query(50, ge=1, le=200, description="Limite de ativos a processar"),
+    background: bool = Query(False, description="Executar em background"),
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db)
 ):
     """Enriquece ativos pendentes de enriquecimento"""
     try:
+        logger.info(f"Enriquecendo ativos pendentes - limit: {limit}, background: {background}")
         service = EnrichmentService()
         
-        if background_tasks:
+        if background and background_tasks:
             # Executar em background
             background_tasks.add_task(
                 service.enrich_pending_ativos,
@@ -107,8 +109,20 @@ async def enrich_pending_ativos(
         else:
             # Executar sincronamente
             resultado = service.enrich_pending_ativos(db, limit)
-            return BulkEnrichmentResponse(**resultado)
+            logger.info(f"Resultado do enriquecimento: {resultado}")
             
+            # Validar manualmente antes de criar a resposta
+            try:
+                response = BulkEnrichmentResponse(**resultado)
+                logger.info(f"Resposta validada com sucesso: {response}")
+                return response
+            except Exception as validation_error:
+                logger.error(f"Erro de validação Pydantic: {validation_error}")
+                logger.error(f"Dados que causaram erro: {resultado}")
+                raise HTTPException(status_code=422, detail=f"Erro de validação: {str(validation_error)}")
+            
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Erro ao enriquecer ativos pendentes: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")

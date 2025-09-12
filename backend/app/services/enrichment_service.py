@@ -150,8 +150,7 @@ class EnrichmentService:
             
             if not ativos_pendentes:
                 return {
-                    'sucesso': True,
-                    'mensagem': 'Nenhum ativo pendente de enriquecimento',
+                    'message': 'Nenhum ativo pendente de enriquecimento',
                     'total': 0,
                     'enriquecidos': 0,
                     'falhas': 0

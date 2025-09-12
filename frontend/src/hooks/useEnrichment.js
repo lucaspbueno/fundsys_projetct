@@ -57,10 +57,9 @@ export function useEnrichPendingAtivos() {
     mutationFn: async ({ limit = 50, background = false }) => {
       const params = new URLSearchParams();
       if (limit) params.append("limit", limit);
+      if (background) params.append("background", "true");
       
-      const { data } = await axios.post(`${API_BASE}/enrich/pending?${params}`, {
-        background
-      });
+      const { data } = await axios.post(`${API_BASE}/enrich/pending?${params}`);
       return data;
     },
     onSuccess: () => {
