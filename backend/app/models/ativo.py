@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .posicao import Posicao
     from .indexador import Indexador
     from .relacao_ativo_securitizadora import RelacaoAtivoSecuritizadora
+    from .ativo_enriquecido import AtivoEnriquecido
 
 class Ativo(BaseModel, TimestampMixin):
     __tablename__ = "tb_ativo"
@@ -33,3 +34,4 @@ class Ativo(BaseModel, TimestampMixin):
     posicoes                : Mapped[list["Posicao"]]                    = relationship("Posicao", back_populates="ativo")
     indexador               : Mapped["Indexador"]                        = relationship("Indexador", back_populates="ativos")
     relacoes_securitizadoras: Mapped[list['RelacaoAtivoSecuritizadora']] = relationship("RelacaoAtivoSecuritizadora", back_populates="ativo")
+    dados_enriquecidos      : Mapped[Optional["AtivoEnriquecido"]]       = relationship("AtivoEnriquecido", back_populates="ativo", uselist=False)
