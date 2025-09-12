@@ -42,14 +42,15 @@ export default function Insights() {
     ativo: "",
   });
   
+  const [appliedFilters, setAppliedFilters] = useState({});
   const [enrichedMode, setEnrichedMode] = useState(false);
 
   // Use fund-specific analytics if fund ID is provided, otherwise use general overview
   const { data: fundoData, isLoading: fundoLoading } = useFundoDetalhes(selectedFundoId);
   const { data: fileAnalyticsData, isLoading: fileAnalyticsLoading } = useFileAnalytics(selectedFileId);
-  const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview(enrichedMode, selectedFundoId);
+  const { data: overviewData, isLoading: overviewLoading, refetch: refetchOverview } = useOverview(enrichedMode, selectedFundoId, appliedFilters);
   const { data: indexadoresData, isLoading: indexadoresLoading } = useIndexadores();
-  const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal();
+  const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal(null, appliedFilters);
   
   // Calcular crescimento baseado na evolução mensal
   const crescimento = useMemo(() => {
@@ -92,6 +93,21 @@ export default function Insights() {
 
   function handleFilterChange(key, value) {
     setFilters(prev => ({ ...prev, [key]: value }));
+  }
+
+  function handleApplyFilters() {
+    // Aplicar os filtros digitados
+    setAppliedFilters({ ...filters });
+  }
+
+  function handleClearFilters() {
+    setFilters({
+      dateFrom: "",
+      dateTo: "",
+      indexador: "",
+      ativo: "",
+    });
+    setAppliedFilters({});
   }
 
   function handleRefresh() {
@@ -238,45 +254,105 @@ export default function Insights() {
         <CardContent className="px-4 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div>
-              <Label htmlFor="dateFrom" className="text-sm font-medium">Data Inicial</Label>
+              <Label htmlFor="dateFrom" className="text-sm font-medium">
+                Data Inicial
+                {filters.dateFrom && filters.dateFrom !== appliedFilters.dateFrom && (
+                  <span className="ml-2 text-xs text-warning">• Pendente</span>
+                )}
+              </Label>
               <Input
                 id="dateFrom"
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                className="border-border/50 focus:border-primary focus:ring-primary/20 text-sm"
+                className={`border-border/50 focus:border-primary focus:ring-primary/20 text-sm ${
+                  filters.dateFrom && filters.dateFrom !== appliedFilters.dateFrom 
+                    ? 'border-warning/50 bg-warning/5' 
+                    : ''
+                }`}
               />
             </div>
             <div>
-              <Label htmlFor="dateTo" className="text-sm font-medium">Data Final</Label>
+              <Label htmlFor="dateTo" className="text-sm font-medium">
+                Data Final
+                {filters.dateTo && filters.dateTo !== appliedFilters.dateTo && (
+                  <span className="ml-2 text-xs text-warning">• Pendente</span>
+                )}
+              </Label>
               <Input
                 id="dateTo"
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                className="border-border/50 focus:border-primary focus:ring-primary/20 text-sm"
+                className={`border-border/50 focus:border-primary focus:ring-primary/20 text-sm ${
+                  filters.dateTo && filters.dateTo !== appliedFilters.dateTo 
+                    ? 'border-warning/50 bg-warning/5' 
+                    : ''
+                }`}
               />
             </div>
             <div>
-              <Label htmlFor="indexador" className="text-sm font-medium">Indexador</Label>
+              <Label htmlFor="indexador" className="text-sm font-medium">
+                Indexador
+                {filters.indexador && filters.indexador !== appliedFilters.indexador && (
+                  <span className="ml-2 text-xs text-warning">• Pendente</span>
+                )}
+              </Label>
               <Input
                 id="indexador"
                 placeholder="Ex: DI1, IAP, PRE"
                 value={filters.indexador}
                 onChange={(e) => handleFilterChange("indexador", e.target.value)}
-                className="border-border/50 focus:border-primary focus:ring-primary/20 text-sm"
+                className={`border-border/50 focus:border-primary focus:ring-primary/20 text-sm ${
+                  filters.indexador && filters.indexador !== appliedFilters.indexador 
+                    ? 'border-warning/50 bg-warning/5' 
+                    : ''
+                }`}
               />
             </div>
             <div>
-              <Label htmlFor="ativo" className="text-sm font-medium">Código do Ativo</Label>
+              <Label htmlFor="ativo" className="text-sm font-medium">
+                Código do Ativo
+                {filters.ativo && filters.ativo !== appliedFilters.ativo && (
+                  <span className="ml-2 text-xs text-warning">• Pendente</span>
+                )}
+              </Label>
               <Input
                 id="ativo"
                 placeholder="Ex: CRA02300FFL"
                 value={filters.ativo}
                 onChange={(e) => handleFilterChange("ativo", e.target.value)}
-                className="border-border/50 focus:border-primary focus:ring-primary/20 text-sm"
+                className={`border-border/50 focus:border-primary focus:ring-primary/20 text-sm ${
+                  filters.ativo && filters.ativo !== appliedFilters.ativo 
+                    ? 'border-warning/50 bg-warning/5' 
+                    : ''
+                }`}
               />
             </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
+            <Button
+              onClick={handleApplyFilters}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              size="sm"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Aplicar Filtros
+            </Button>
+            <Button
+              onClick={handleClearFilters}
+              variant="outline"
+              className="border-muted-foreground/20 text-muted-foreground hover:bg-muted/10"
+              size="sm"
+            >
+              Limpar Filtros
+            </Button>
+            {Object.keys(appliedFilters).some(key => appliedFilters[key]) && (
+              <div className="flex items-center gap-2 text-sm text-success">
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                Filtros aplicados
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

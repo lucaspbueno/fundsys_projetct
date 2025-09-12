@@ -17,14 +17,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_overview_service(db: Session, fundo_id: Optional[int] = None, enriched: bool = False) -> OverviewResponse:
+def get_overview_service(
+    db: Session, 
+    fundo_id: Optional[int] = None, 
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    indexador: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
+) -> OverviewResponse:
     """Service para buscar overview geral"""
     try:
         if fundo_id:
             from app.persiste.queries.fundo_analytics import get_fundo_analytics_data
-            data = get_fundo_analytics_data(db, fundo_id, enriched)
+            data = get_fundo_analytics_data(db, fundo_id, enriched, date_from, date_to, indexador, codigo_ativo)
         else:
-            data = get_overview_data(db, enriched)
+            data = get_overview_data(db, enriched, date_from, date_to, indexador, codigo_ativo)
         return OverviewResponse(**data)
     except Exception as e:
         logger.error(f"Erro no service de overview: {e}")
@@ -47,15 +55,18 @@ def get_ativos_service(
     indexador: Optional[str] = None, 
     limit: int = 50, 
     offset: int = 0,
-    enriched: bool = False
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
 ) -> AtivosResponse:
     """Service para buscar dados dos ativos"""
     try:
         if fundo_id:
             from app.persiste.queries.fundo_analytics import get_fundo_ativos_data
-            data = get_fundo_ativos_data(db, fundo_id, indexador, limit, offset, enriched)
+            data = get_fundo_ativos_data(db, fundo_id, indexador, limit, offset, enriched, date_from, date_to, codigo_ativo)
         else:
-            data = get_ativos_data(db, indexador, limit, offset, enriched)
+            data = get_ativos_data(db, indexador, limit, offset, enriched, date_from, date_to, codigo_ativo)
         return AtivosResponse(**data)
     except Exception as e:
         logger.error(f"Erro no service de ativos: {e}")
@@ -64,11 +75,15 @@ def get_ativos_service(
 
 def get_evolucao_mensal_service(
     db: Session, 
-    ano: Optional[int] = None
+    ano: Optional[int] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    indexador: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
 ) -> EvolucaoMensalResponse:
     """Service para buscar evolução mensal"""
     try:
-        data = get_evolucao_mensal_data(db, ano)
+        data = get_evolucao_mensal_data(db, ano, date_from, date_to, indexador, codigo_ativo)
         return EvolucaoMensalResponse(**data)
     except Exception as e:
         logger.error(f"Erro no service de evolução mensal: {e}")
