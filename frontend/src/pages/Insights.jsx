@@ -51,6 +51,37 @@ export default function Insights() {
   const { data: indexadoresData, isLoading: indexadoresLoading } = useIndexadores();
   const { data: evolucaoData, isLoading: evolucaoLoading } = useEvolucaoMensal();
   
+  // Calcular crescimento baseado na evolução mensal
+  const crescimento = useMemo(() => {
+    if (!evolucaoData?.evolucao || evolucaoData.evolucao.length < 2) {
+      return 0;
+    }
+    
+    // Mapear nomes dos meses para números para ordenação correta
+    const mesesNomes = {
+      "Janeiro": 1, "Fevereiro": 2, "Março": 3, "Abril": 4, 
+      "Maio": 5, "Junho": 6, "Julho": 7, "Agosto": 8, 
+      "Setembro": 9, "Outubro": 10, "Novembro": 11, "Dezembro": 12
+    };
+    
+    // Ordenar meses por número (mais recente primeiro)
+    const meses = [...evolucaoData.evolucao].sort((a, b) => {
+      const numA = mesesNomes[a.mes] || 0;
+      const numB = mesesNomes[b.mes] || 0;
+      return numB - numA;
+    });
+    
+    const mesAtual = meses[0];
+    const mesAnterior = meses[1];
+    
+    if (!mesAnterior || mesAnterior.valor_total === 0) {
+      return 0;
+    }
+    
+    const crescimento = ((mesAtual.valor_total - mesAnterior.valor_total) / mesAnterior.valor_total) * 100;
+    return Math.round(crescimento * 10) / 10; // Arredondar para 1 casa decimal
+  }, [evolucaoData]);
+  
   // Enrichment status and controls
   const { data: enrichmentStatus } = useEnrichmentStatus();
   const enrichPendingMutation = useEnrichPendingAtivos();
@@ -302,7 +333,9 @@ export default function Insights() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-warning">Crescimento</p>
-                <p className="text-2xl sm:text-3xl font-bold text-foreground">+12.5%</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                  {crescimento > 0 ? '+' : ''}{crescimento}%
+                </p>
               </div>
               <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-warning" />
             </div>
@@ -401,7 +434,7 @@ export default function Insights() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm sm:text-base font-bold text-primary">
-                      R$ {(ativo.valor_principal || 0).toLocaleString('pt-BR', {
+                      R$ {(ativo.valor || 0).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       })}
