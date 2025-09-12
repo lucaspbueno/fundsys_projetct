@@ -5,26 +5,60 @@ from typing import List, Dict, Any, Optional
 from decimal import Decimal
 
 
-def get_overview_data(db: Session, enriched: bool = False) -> Dict[str, Any]:
+def get_overview_data(
+    db: Session, 
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    indexador: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
+) -> Dict[str, Any]:
     """Busca dados do overview geral"""
-    # Total de ativos
-    total_ativos = db.query(Ativo).count()
+    from datetime import datetime
     
-    # Total de indexadores únicos
-    total_indexadores = db.query(Indexador).count()
+    # Construir query base com joins necessários
+    base_query = db.query(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador)
     
-    # Valor total (soma das posições)
-    valor_total = db.query(func.sum(Posicao.vl_principal)).scalar() or 0
+    # Aplicar filtros
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            base_query = base_query.filter(Posicao.dt_posicao >= date_from_obj)
+        except ValueError:
+            pass  # Ignorar data inválida
     
-    # Indexadores com contagem
-    indexadores_stats = db.query(
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            base_query = base_query.filter(Posicao.dt_posicao <= date_to_obj)
+        except ValueError:
+            pass  # Ignorar data inválida
+    
+    if indexador:
+        base_query = base_query.filter(Indexador.cd_indexador == indexador)
+    
+    if codigo_ativo:
+        base_query = base_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+    
+    # Total de ativos (com filtros aplicados)
+    total_ativos = base_query.count()
+    
+    # Total de indexadores únicos (com filtros aplicados)
+    total_indexadores = base_query.with_entities(Indexador.id_indexador).distinct().count()
+    
+    # Valor total (soma das posições com filtros aplicados)
+    valor_total = base_query.with_entities(func.sum(Posicao.vl_principal)).scalar() or 0
+    
+    # Indexadores com contagem (aplicar filtros)
+    indexadores_query = base_query.with_entities(
         Indexador.cd_indexador,
         func.count(Ativo.id_ativo).label('quantidade')
-    ).select_from(Indexador).join(Ativo, Indexador.id_indexador == Ativo.id_indexador).group_by(Indexador.cd_indexador).all()
+    ).group_by(Indexador.cd_indexador)
+    indexadores_stats = indexadores_query.all()
     
-    # Top 5 ativos por valor
+    # Top 5 ativos por valor (aplicar filtros)
     if enriched:
-        top_ativos = db.query(
+        top_ativos_query = base_query.with_entities(
             Ativo.cd_ativo,
             Posicao.vl_principal,
             Indexador.cd_indexador,
@@ -34,13 +68,15 @@ def get_overview_data(db: Session, enriched: bool = False) -> Dict[str, Any]:
             AtivoEnriquecido.securitizadora,
             AtivoEnriquecido.resgate_antecipado,
             AtivoEnriquecido.agente_fiduciario
-        ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo).order_by(desc(Posicao.vl_principal)).limit(5).all()
+        ).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo).order_by(desc(Posicao.vl_principal)).limit(5)
+        top_ativos = top_ativos_query.all()
     else:
-        top_ativos = db.query(
+        top_ativos_query = base_query.with_entities(
             Ativo.cd_ativo,
             Posicao.vl_principal,
             Indexador.cd_indexador
-        ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).order_by(desc(Posicao.vl_principal)).limit(5).all()
+        ).order_by(desc(Posicao.vl_principal)).limit(5)
+        top_ativos = top_ativos_query.all()
     
     return {
         "total_ativos": total_ativos,
@@ -99,19 +135,58 @@ def get_ativos_data(
     indexador: Optional[str] = None, 
     limit: int = 50, 
     offset: int = 0,
-    enriched: bool = False
+    enriched: bool = False,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
 ) -> Dict[str, Any]:
     """Busca dados dos ativos com filtros"""
+    from datetime import datetime
+    
     if enriched:
         enriched_query = db.query(Ativo, Posicao, Indexador, AtivoEnriquecido).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).outerjoin(AtivoEnriquecido, Ativo.id_ativo == AtivoEnriquecido.id_ativo)
+        
+        # Aplicar filtros
         if indexador:
             enriched_query = enriched_query.filter(Indexador.cd_indexador == indexador)
+        if date_from:
+            try:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                enriched_query = enriched_query.filter(Posicao.dt_posicao >= date_from_obj)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                enriched_query = enriched_query.filter(Posicao.dt_posicao <= date_to_obj)
+            except ValueError:
+                pass
+        if codigo_ativo:
+            enriched_query = enriched_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+            
         ativos_enriched = enriched_query.offset(offset).limit(limit).all()
         total = enriched_query.count()
     else:
         simple_query = db.query(Ativo, Posicao, Indexador).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Indexador, Ativo.id_indexador == Indexador.id_indexador)
+        
+        # Aplicar filtros
         if indexador:
             simple_query = simple_query.filter(Indexador.cd_indexador == indexador)
+        if date_from:
+            try:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                simple_query = simple_query.filter(Posicao.dt_posicao >= date_from_obj)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                simple_query = simple_query.filter(Posicao.dt_posicao <= date_to_obj)
+            except ValueError:
+                pass
+        if codigo_ativo:
+            simple_query = simple_query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
+            
         ativos_simple = simple_query.offset(offset).limit(limit).all()
         total = simple_query.count()
     
@@ -155,19 +230,47 @@ def get_ativos_data(
 
 def get_evolucao_mensal_data(
     db: Session, 
-    ano: Optional[int] = None
+    ano: Optional[int] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    indexador: Optional[str] = None,
+    codigo_ativo: Optional[str] = None
 ) -> Dict[str, Any]:
     """Busca dados da evolução mensal"""
+    from datetime import datetime
+    
+    # Construir query base com joins necessários
     query = db.query(
         func.extract('month', Lote.dt_operacao).label('mes'),
         func.count(Ativo.id_ativo).label('quantidade'),
         func.sum(Posicao.vl_principal).label('valor_total')
-    ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Lote, Ativo.id_lote == Lote.id_lote).group_by(
+    ).select_from(Ativo).join(Posicao, Ativo.id_ativo == Posicao.id_ativo).join(Lote, Ativo.id_lote == Lote.id_lote).join(Indexador, Ativo.id_indexador == Indexador.id_indexador).group_by(
         func.extract('month', Lote.dt_operacao)
     )
     
+    # Aplicar filtros
     if ano:
         query = query.filter(func.extract('year', Lote.dt_operacao) == ano)
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            query = query.filter(Posicao.dt_posicao >= date_from_obj)
+        except ValueError:
+            pass  # Ignorar data inválida
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            query = query.filter(Posicao.dt_posicao <= date_to_obj)
+        except ValueError:
+            pass  # Ignorar data inválida
+    
+    if indexador:
+        query = query.filter(Indexador.cd_indexador == indexador)
+    
+    if codigo_ativo:
+        query = query.filter(Ativo.cd_ativo.ilike(f'%{codigo_ativo}%'))
     
     evolucao = query.all()
     
